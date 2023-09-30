@@ -14,6 +14,8 @@ public class TeleopMK1 extends LinearOpMode {
     private DcMotor backLeft;
     private DcMotor backRight;
 
+    double tgtPower = 0;
+
     @Override
     public void runOpMode() {
 
@@ -29,14 +31,17 @@ public class TeleopMK1 extends LinearOpMode {
 
         while (opModeIsActive()) {
 
+            if (!this.gamepad1.b) {
+                tgtPower = this.gamepad1.left_stick_y;
+            } else {
+                tgtPower = (this.gamepad1.left_stick_y / 2);
+            }
 
+            frontLeft.setPower(tgtPower);
+            backLeft.setPower(tgtPower);
+            frontRight.setPower(-tgtPower);
+            backRight.setPower(-tgtPower);
 
-            frontLeft.setPower(this.gamepad1.left_stick_y);
-            backLeft.setPower(this.gamepad1.left_stick_y);
-
-            frontRight.setPower(-this.gamepad1.right_stick_y);
-            backRight.setPower(-this.gamepad1.right_stick_y);
-            
             telemetry.addData("Is b button pressed?", this.gamepad1.b);
             telemetry.addData("Status", "Running");
             telemetry.update();
