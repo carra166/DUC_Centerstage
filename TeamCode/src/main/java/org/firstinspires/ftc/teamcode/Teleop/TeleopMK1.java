@@ -29,15 +29,15 @@ public class TeleopMK1 extends LinearOpMode {
 
         while (opModeIsActive()) {
 
+
+
             frontLeft.setPower(this.gamepad1.left_stick_y);
             backLeft.setPower(this.gamepad1.left_stick_y);
 
             frontRight.setPower(-this.gamepad1.right_stick_y);
             backRight.setPower(-this.gamepad1.right_stick_y);
-
-            System.out.println(gamepad1);
-
-            telemetry.addData("Gamepad", this.gamepad1);
+            
+            telemetry.addData("Is b button pressed?", this.gamepad1.b);
             telemetry.addData("Status", "Running");
             telemetry.update();
         }
