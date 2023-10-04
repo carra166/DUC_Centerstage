@@ -1,20 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp
-public class TeleopMK1 extends LinearOpMode {
+public class OutreachBasic extends LinearOpMode {
 
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
     private DcMotor backRight;
 
-    double tgtPower = 0;
+    double tgtPowerLeft = 0;
+    double tgtPowerRight = 0;
 
     @Override
     public void runOpMode() {
@@ -31,18 +30,22 @@ public class TeleopMK1 extends LinearOpMode {
 
         while (opModeIsActive()) {
 
+            /*this cuts the target power in half if you're
+            holding down the b button on the controller*/
             if (!this.gamepad1.b) {
-                tgtPower = this.gamepad1.left_stick_y;
+                tgtPowerLeft = this.gamepad1.left_stick_y;
+                tgtPowerRight = this.gamepad1.right_stick_y;
             } else {
-                tgtPower = (this.gamepad1.left_stick_y / 2);
+                tgtPowerLeft = (this.gamepad1.left_stick_y / 2);
+                tgtPowerRight = (this.gamepad1.right_stick_y / 2);
             }
 
-            frontLeft.setPower(tgtPower);
-            backLeft.setPower(tgtPower);
-            frontRight.setPower(-tgtPower);
-            backRight.setPower(-tgtPower);
+            //sets motor power
+            frontLeft.setPower(tgtPowerLeft);
+            backLeft.setPower(tgtPowerLeft);
+            frontRight.setPower(-tgtPowerRight);
+            backRight.setPower(-tgtPowerRight);
 
-            telemetry.addData("Is b button pressed?", this.gamepad1.b);
             telemetry.addData("Status", "Running");
             telemetry.update();
         }
