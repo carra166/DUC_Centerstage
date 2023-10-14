@@ -48,10 +48,10 @@ public class TeleopMK2 extends LinearOpMode {
 
             //sets motor power
             setPowerAll(
-                    tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
+                    -tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
                     tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
                     -tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
-                    -tgtPowerForward + tgtPowerStrafe - tgtPowerTurn
+                    tgtPowerForward - tgtPowerStrafe - tgtPowerTurn
             );
 
             telemetry.addData("a", "Whaha");
