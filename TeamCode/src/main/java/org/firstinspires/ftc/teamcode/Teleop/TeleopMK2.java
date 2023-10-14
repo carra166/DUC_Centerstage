@@ -48,16 +48,17 @@ public class TeleopMK2 extends LinearOpMode {
 
             //sets motor power
             setPowerAll(
-            tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
-            tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
-            -tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
-            -tgtPowerForward + tgtPowerStrafe - tgtPowerTurn
+                    tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
+                    tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
+                    -tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
+                    -tgtPowerForward + tgtPowerStrafe - tgtPowerTurn
             );
 
             telemetry.addData("a", "Whaha");
             telemetry.update();
         }
     }
+
 
     private void setPowerAll(double fl, double fr, double bl, double br) {
         frontLeft.setPower(fl);
@@ -77,5 +78,5 @@ public class TeleopMK2 extends LinearOpMode {
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
-}
 
+}
