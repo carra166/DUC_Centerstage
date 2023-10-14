@@ -81,6 +81,7 @@ public class AutonomousMK1 extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         Drive(0);
+        sleep(500); // Use this after setting power to 0 to give it time to brake
 
     }
 
