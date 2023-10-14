@@ -4,6 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
+/*
+10430 TELEOP
+Motor gamepad controls
+*/
 @TeleOp
 public class TeleopMK2 extends LinearOpMode {
 
@@ -22,15 +26,7 @@ public class TeleopMK2 extends LinearOpMode {
     public void runOpMode() {
 
         //initialized motors
-        frontLeft = hardwareMap.get(DcMotor.class, "FL");
-        frontRight = hardwareMap.get(DcMotor.class, "FR");
-        backLeft = hardwareMap.get(DcMotor.class, "BL");
-        backRight = hardwareMap.get(DcMotor.class, "BR");
-
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        initializeMotors();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -51,13 +47,34 @@ public class TeleopMK2 extends LinearOpMode {
             }
 
             //sets motor power
-            frontLeft.setPower(tgtPowerForward - tgtPowerStrafe - tgtPowerTurn);
-            backLeft.setPower(tgtPowerForward + tgtPowerStrafe - tgtPowerTurn);
-            frontRight.setPower(-tgtPowerForward - tgtPowerStrafe - tgtPowerTurn);
-            backRight.setPower(-tgtPowerForward + tgtPowerStrafe - tgtPowerTurn);
+            setPowerAll(
+            tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
+            tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
+            -tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
+            -tgtPowerForward + tgtPowerStrafe - tgtPowerTurn
+            );
 
-            telemetry.addData("Debounce", debounceCount);
+            telemetry.addData("a", "Whaha");
             telemetry.update();
         }
     }
+}
+
+private void setPowerAll(double fl, double fr, double bl, double br) {
+    frontLeft.setPower(fl);
+    backLeft.setPower(bl);
+    frontRight.setPower(fr);
+    backRight.setPower(br);
+ }
+
+private void initializeMotors() {
+    frontLeft = hardwareMap.get(DcMotor.class, "FL");
+    frontRight = hardwareMap.get(DcMotor.class, "FR");
+    backLeft = hardwareMap.get(DcMotor.class, "BL");
+    backRight = hardwareMap.get(DcMotor.class, "BR");
+
+    frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 }
