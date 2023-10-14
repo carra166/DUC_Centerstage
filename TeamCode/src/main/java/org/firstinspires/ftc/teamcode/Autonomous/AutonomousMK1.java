@@ -28,7 +28,7 @@ public class AutonomousMK1 extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            linearMovement(1, 100, "Test");
+            linearMovement(1, 1440, "Test");
 
             telemetry.addData("a", "Whaha");
             telemetry.update();
@@ -38,62 +38,62 @@ public class AutonomousMK1 extends LinearOpMode {
     }
 
 
-}
+    private void initializeMotors() {
+        frontLeft = hardwareMap.get(DcMotor.class, "FL");
+        frontRight = hardwareMap.get(DcMotor.class, "FR");
+        backLeft = hardwareMap.get(DcMotor.class, "BL");
+        backRight = hardwareMap.get(DcMotor.class, "BR");
 
-private void initializeMotors() {
-    frontLeft = hardwareMap.get(DcMotor.class, "FL");
-    frontRight = hardwareMap.get(DcMotor.class, "FR");
-    backLeft = hardwareMap.get(DcMotor.class, "BL");
-    backRight = hardwareMap.get(DcMotor.class, "BR");
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-    frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-    frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-}
-
-private void linearMovement(double power, int distance, String type ) {
-    //POSITIVE VALUES GO FORWARD, NEGATIVE VALUES GO BACKWARD
-
-    frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-    frontRight.setTargetPosition(distance);
-    frontLeft.setTargetPosition(distance);
-    backRight.setTargetPosition(distance);
-    backLeft.setTargetPosition(distance);
-
-    frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-    Drive(power);
-
-    while(frontRight.isBusy() && frontLeft.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
-    telemetry.addData("Type of movement", type);
     }
 
-    //sets power to zero, therefore breaking
-    Drive(0);
-    frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    private void linearMovement(double power, int distance, String type) {
+        //POSITIVE VALUES GO FORWARD, NEGATIVE VALUES GO BACKWARD
 
-}
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-private void Drive(int power) {
-    frontLeft.setPower(power);
-    backLeft.setPower(power);
-    frontRight.setPower(power);
-    backRight.setPower(power);
+        frontRight.setTargetPosition(distance);
+        frontLeft.setTargetPosition(distance);
+        backRight.setTargetPosition(distance);
+        backLeft.setTargetPosition(distance);
+
+        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        Drive(power);
+
+        while (frontRight.isBusy() && frontLeft.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
+            telemetry.addData("Type of movement", type);
+        }
+
+        //sets power to zero, therefore breaking
+        Drive(0);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+    }
+
+    private void Drive(int power) {
+        frontLeft.setPower(power);
+        backLeft.setPower(power);
+        frontRight.setPower(power);
+        backRight.setPower(power);
+    }
+
 }
