@@ -48,33 +48,35 @@ public class TeleopMK2 extends LinearOpMode {
 
             //sets motor power
             setPowerAll(
-            tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
-            tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
-            -tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
-            -tgtPowerForward + tgtPowerStrafe - tgtPowerTurn
+                    tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
+                    tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
+                    -tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
+                    -tgtPowerForward + tgtPowerStrafe - tgtPowerTurn
             );
 
             telemetry.addData("a", "Whaha");
             telemetry.update();
         }
     }
-}
 
-private void setPowerAll(double fl, double fr, double bl, double br) {
-    frontLeft.setPower(fl);
-    backLeft.setPower(bl);
-    frontRight.setPower(fr);
-    backRight.setPower(br);
- }
 
-private void initializeMotors() {
-    frontLeft = hardwareMap.get(DcMotor.class, "FL");
-    frontRight = hardwareMap.get(DcMotor.class, "FR");
-    backLeft = hardwareMap.get(DcMotor.class, "BL");
-    backRight = hardwareMap.get(DcMotor.class, "BR");
+    private void setPowerAll(double fl, double fr, double bl, double br) {
+        frontLeft.setPower(fl);
+        backLeft.setPower(bl);
+        frontRight.setPower(fr);
+        backRight.setPower(br);
+    }
 
-    frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    private void initializeMotors() {
+        frontLeft = hardwareMap.get(DcMotor.class, "FL");
+        frontRight = hardwareMap.get(DcMotor.class, "FR");
+        backLeft = hardwareMap.get(DcMotor.class, "BL");
+        backRight = hardwareMap.get(DcMotor.class, "BR");
+
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
 }

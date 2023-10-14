@@ -56,7 +56,7 @@ public class AutonomousMK1 extends LinearOpMode {
 
     }
 
-    private void linearMovement(double power, int distance, String type) {
+    private void linearMovement(int power, int distance, String type) {
         //POSITIVE VALUES GO FORWARD, NEGATIVE VALUES GO BACKWARD
 
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
