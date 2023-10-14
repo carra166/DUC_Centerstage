@@ -61,9 +61,9 @@ public class AutonomousMK1 extends LinearOpMode {
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontRight.setTargetPosition(distance);
-        frontLeft.setTargetPosition(distance);
+        frontLeft.setTargetPosition(-distance);
         backRight.setTargetPosition(distance);
-        backLeft.setTargetPosition(distance);
+        backLeft.setTargetPosition(-distance);
 
         frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -87,9 +87,9 @@ public class AutonomousMK1 extends LinearOpMode {
 
     private void Drive(int power) {
         frontLeft.setPower(power);
-        backLeft.setPower(-power);
+        backLeft.setPower(power);
         frontRight.setPower(power);
-        backRight.setPower(-power);
+        backRight.setPower(power);
     }
 
 }
