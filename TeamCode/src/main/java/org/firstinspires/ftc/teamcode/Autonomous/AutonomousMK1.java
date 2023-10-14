@@ -49,10 +49,9 @@ public class AutonomousMK1 extends LinearOpMode {
         frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
     }
 
-    private void linearMovement(int power, int distance, String type) {
+    private void linearMovement(double power, int distance, String type) {
         //POSITIVE VALUES GO FORWARD, NEGATIVE VALUES GO BACKWARD
 
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -76,7 +75,7 @@ public class AutonomousMK1 extends LinearOpMode {
             telemetry.addData("Type of movement", type);
         }
 
-        //sets power to zero, therefore breaking
+        //sets power to zero, therefore braking
         Drive(0);
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -85,7 +84,7 @@ public class AutonomousMK1 extends LinearOpMode {
 
     }
 
-    private void Drive(int power) {
+    private void Drive(double power) {
         frontLeft.setPower(power);
         backLeft.setPower(power);
         frontRight.setPower(power);
