@@ -26,14 +26,10 @@ public class AutonomousMK1 extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
-        while (opModeIsActive()) {
+        linearMovement(1, 1440, "Test");
 
-            linearMovement(1, 1440, "Test");
-
-            telemetry.addData("a", "Whaha");
-            telemetry.update();
-
-        }
+        telemetry.addData("a", "Whaha");
+        telemetry.update();
 
     }
 
@@ -91,9 +87,9 @@ public class AutonomousMK1 extends LinearOpMode {
 
     private void Drive(int power) {
         frontLeft.setPower(power);
-        backLeft.setPower(power);
+        backLeft.setPower(-power);
         frontRight.setPower(power);
-        backRight.setPower(power);
+        backRight.setPower(-power);
     }
 
 }
