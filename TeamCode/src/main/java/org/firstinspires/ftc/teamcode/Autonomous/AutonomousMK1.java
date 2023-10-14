@@ -26,7 +26,7 @@ public class AutonomousMK1 extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
-        linearMovement(1, 1440, "Test");
+        linearMovement(1.0, 1440, "Test");
 
         telemetry.addData("a", "Whaha");
         telemetry.update();
@@ -72,7 +72,7 @@ public class AutonomousMK1 extends LinearOpMode {
         Drive(power);
 
         while (frontRight.isBusy() && frontLeft.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
-            telemetry.addData("Type of movement", type);
+            //telemetry.addData("Type of movement", type);
         }
 
         //sets power to zero, therefore braking
