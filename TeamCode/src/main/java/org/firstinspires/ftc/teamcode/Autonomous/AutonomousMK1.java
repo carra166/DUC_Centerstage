@@ -3,6 +3,11 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 /*
 10430 AUTONOMOUS PROGRAM
@@ -10,23 +15,36 @@ Uses encoders
 */
 @Autonomous
 //@Disabled
-public class AutonomousMK1 extends LinearOpMode {
+public class AutonomousMK1<myIMUparameters> extends LinearOpMode {
 
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
     private DcMotor backRight;
+    private IMU imu;
+    private YawPitchRollAngles robotOrientation;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
+        imu = hardwareMap.get(IMU.class, "imu");
         initializeMotors();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD, RevHubOrientationOnRobot.UsbFacingDirection.UP)));
+        robotOrientation = imu.getRobotYawPitchRollAngles();
+
+        double Yaw   = robotOrientation.getYaw(AngleUnit.DEGREES);
+        double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
+        double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
+
         waitForStart();
 
         linearMovement(1.0, 1440, "Test");
+        linearMovement(0.5, -1440, "Test");
+        linearMovement(0.5, 1440, "Test");
+        linearMovement(1.0, -1440, "Test");
 
         telemetry.addData("a", "Whaha");
         telemetry.update();
