@@ -3,8 +3,11 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
@@ -25,12 +28,20 @@ public class TeleopMK2 extends LinearOpMode {
     IMU imu;
     YawPitchRollAngles robotOrientation;
 
+    Servo servoDoor;
+    Servo servoWrist;
+    CRServo servoIntake;
+
     double tgtPowerForward = 0;
     double tgtPowerStrafe = 0;
     double tgtPowerTurn = 0;
     double tgtPowerArm = 0;
 
     double division = 1;
+
+    boolean inputOn = false;
+    boolean canInputOn = true;
+
     @Override
     public void runOpMode() {
 
@@ -62,11 +73,40 @@ public class TeleopMK2 extends LinearOpMode {
             }
 
             if (this.gamepad1.dpad_up) {
-                tgtPowerArm = 0.1;
+                tgtPowerArm = 0.2;
             } else if (this.gamepad1.dpad_down) {
-                tgtPowerArm = -0.1;
+                tgtPowerArm = -0.2;
             } else {
                 tgtPowerArm = 0;
+            }
+
+            if(gamepad1.y) {
+                // move to 0 degrees.
+                servoWrist.setPosition(0);
+            } else if (gamepad1.a) {
+                // move to 180 degrees.
+                servoWrist.setPosition(1);
+            }
+
+            if (gamepad1.dpad_left) {
+                servoDoor.setPosition(0.5);
+                sleep(750);
+                servoDoor.setPosition(0);
+            }
+
+            if (gamepad1.dpad_right) {
+                if (canInputOn) {
+                    if (inputOn) {
+                        inputOn = false;
+                        servoIntake.setPower(0);
+                    } else {
+                        inputOn = true;
+                        servoIntake.setPower(0.1);
+                    }
+                    canInputOn = false;
+                }
+            } else {
+                canInputOn = true;
             }
 
             tgtPowerForward = (-this.gamepad1.left_stick_y / division);
@@ -88,6 +128,7 @@ public class TeleopMK2 extends LinearOpMode {
             AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
 
             telemetry.addData("Yaw", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
+            telemetry.addData("current wrist amount", servoWrist.getPosition());
             telemetry.update();
         }
     }
@@ -112,6 +153,12 @@ public class TeleopMK2 extends LinearOpMode {
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        servoDoor = hardwareMap.get(Servo.class, "door");
+        servoWrist = hardwareMap.get(Servo.class, "wrist");
+        servoIntake = hardwareMap.get(CRServo.class,"intake");
+
+        servoWrist.setPosition(1);
     }
 
 }
