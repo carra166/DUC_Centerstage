@@ -39,6 +39,8 @@ public class AutonomousMK1<myIMUparameters> extends LinearOpMode {
         double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
 
+        //while (!isStarted() && !isStopRequested())
+
         waitForStart();
 
         linearMovement(1.0, 1440, "Test");
