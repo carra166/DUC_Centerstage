@@ -1,7 +1,8 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Teleop;
 
 import android.util.Size;
 
+import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -42,7 +43,7 @@ public class TeleopMK2 extends LinearOpMode {
     double tgtPowerForward = 0;
     double tgtPowerStrafe = 0;
     double tgtPowerTurn = 0;
-    double tgtPowerArm = 0;
+    double tgtPowerArm;
 
     double division = 1;
 
@@ -50,6 +51,10 @@ public class TeleopMK2 extends LinearOpMode {
     boolean canInputOn = true;
 
     boolean canMove = true;
+
+    InterpLUT armAngles;
+    double kCos = 0.25;
+    double downPower = 0;
 
     @Override
     public void runOpMode() {
@@ -61,6 +66,15 @@ public class TeleopMK2 extends LinearOpMode {
         //init imu and variables
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD, RevHubOrientationOnRobot.UsbFacingDirection.UP)));
         robotOrientation = imu.getRobotYawPitchRollAngles();
+
+        armAngles = new InterpLUT();
+        armAngles.add(-100, -41); //safety 1
+        armAngles.add(0, -40); //init position
+        armAngles.add(100, 0); //straight out (forward)
+        armAngles.add(400, 90); //straight up
+        armAngles.add(666, 180); //straight back
+        armAngles.add(1000, 181); //safety 2
+        armAngles.createLUT();
 
         AprilTagProcessor tagProcessor = new AprilTagProcessor.Builder()
                 .setDrawAxes(true)
@@ -75,8 +89,17 @@ public class TeleopMK2 extends LinearOpMode {
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .build();
 
+        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+
+        servoWrist.setPosition(0);
+        servoDoor.setPosition(0.5);
+
         waitForStart();
 
         while (opModeIsActive()) {
@@ -94,33 +117,36 @@ public class TeleopMK2 extends LinearOpMode {
                 division = 2;
             }
 
-            if(gamepad1.y) {
+            if(gamepad2.left_bumper) {
                 // move to 0 degrees.
                 servoWrist.setPosition(0);
-            } else if (gamepad1.a) {
+            } else if (gamepad2.right_bumper) {
                 // move to 180 degrees.
                 servoWrist.setPosition(1);
             }
 
-            if (gamepad1.dpad_left) {
-                servoDoor.setPosition(0.5);
+            if (gamepad2.a) {
+                servoDoor.setPosition(0);
                 sleep(750);
+                servoDoor.setPosition(0.5);
+            }
+
+            if (gamepad2.dpad_up) {
+                servoDoor.setPosition(0.5);
+            } else if (gamepad2.dpad_down) {
                 servoDoor.setPosition(0);
             }
 
-            if (gamepad1.dpad_right) {
-                if (canInputOn) {
-                    if (inputOn) {
-                        inputOn = false;
-                        servoIntake.setPower(0);
-                    } else {
-                        inputOn = true;
-                        servoIntake.setPower(0.5);
-                    }
-                    canInputOn = false;
-                }
+            if (gamepad2.x) {
+                servoIntake.setPower(1);
             } else {
-                canInputOn = true;
+                servoIntake.setPower(0);
+            }
+
+            if (gamepad2.y) {
+                downPower = -0.3;
+            } else {
+                downPower = 0;
             }
 
             if(gamepad1.b && canMove) {
@@ -138,16 +164,10 @@ public class TeleopMK2 extends LinearOpMode {
 
             if (gamepad1.x) {
                 while (gamepad1.x) {}
-                armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                armMotor.setTargetPosition(10);
-                armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                armMotor.setPower(-1);
-                while (armMotor.isBusy()) {}
-                servoWrist.setPosition(0);
-                armMotor.setPower(0);
+
             }
 
-            if (tagProcessor.getDetections().size() > 0) {
+            if (tagProcessor.getDetections().size() > 0 && tagProcessor.getDetections().get(0).metadata != null) {
                 AprilTagDetection tag = tagProcessor.getDetections().get(0);
                 telemetry.addData("AprilTags", "FOUND");
                 telemetry.addData("Range", tag.ftcPose.range);
@@ -161,7 +181,7 @@ public class TeleopMK2 extends LinearOpMode {
             tgtPowerForward = (-this.gamepad1.left_stick_y / division);
             tgtPowerStrafe = (-this.gamepad1.left_stick_x / division);
             tgtPowerTurn = (this.gamepad1.right_stick_x / division);
-            tgtPowerArm = (this.gamepad1.right_stick_y);
+            tgtPowerArm = ((this.gamepad2.left_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower );
 
             //sets motor powereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeew44444444444444    q1`1`
             //this comment corrupted but its just too funny to delete
@@ -181,6 +201,13 @@ public class TeleopMK2 extends LinearOpMode {
 
             telemetry.addData("Yaw", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("current wrist amount", servoWrist.getPosition());
+            telemetry.addData("right stick y", this.gamepad1.right_stick_y);
+
+            telemetry.addData("current arm position", armMotor.getCurrentPosition());
+            telemetry.addData("arm angle", armAngles.get(armMotor.getCurrentPosition()));
+            telemetry.addData("gravity compensation", calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos));
+            telemetry.addData("current tgt arm", tgtPowerArm);
+            telemetry.addData("current arm motor power", armMotor.getPower());
             telemetry.update();
         }
     }
@@ -212,6 +239,10 @@ public class TeleopMK2 extends LinearOpMode {
         servoWrist = hardwareMap.get(Servo.class, "wrist");
         servoIntake = hardwareMap.get(CRServo.class,"intake");
 
+    }
+
+    private double calculateArmPower(double armAngle, double kCos) {
+        return kCos * Math.cos(Math.toRadians(armAngle));
     }
 
 }

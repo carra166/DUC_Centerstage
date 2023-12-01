@@ -17,22 +17,24 @@ import java.util.ArrayList;
 
 public class ducProcessor implements VisionProcessor {
 
-    public Scalar blueLower = new Scalar(0, 141.7, 109.1);
-    public Scalar blueUpper = new Scalar(9.9, 255, 247.9);
+    public Scalar redLower = new Scalar(0, 141.7, 109.1);
+    public Scalar redUpper = new Scalar(9.9, 255, 247.9);
 
-    public Rect theFirstOne = new Rect(200, 200, 40, 40);
+    public Rect theFirstOne = new Rect(150, 370, 40, 40);
     public Rect theSecondOne = new Rect(500, 200, 40, 40);
     public Rect theThirdOne = new Rect(600, 200, 40, 40);
 
-    public Mat blueFirst = new Mat();
-    public Mat blueSecond = new Mat();
-    public Mat blueThird = new Mat();
+    public Mat redFirst = new Mat();
+    public Mat redSecond = new Mat();
+    public Mat redThird = new Mat();
 
     boolean tuning = true;
     public Mat hsv = new Mat();
     public Mat threshold = new Mat();
 
     public ArrayList<MatOfPoint> contours = new ArrayList<>();
+
+    public double duckPosition = 1;
 
     @Override
     public void init(int width, int height, CameraCalibration calibration) {
@@ -44,29 +46,27 @@ public class ducProcessor implements VisionProcessor {
 
         if (tuning) {
             Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2HSV);
-            Core.inRange(frame, blueLower, blueUpper, frame);
-            blueFirst = new Mat(frame, theFirstOne);
-            blueSecond = new Mat(frame, theSecondOne);
-            blueThird = new Mat(frame, theThirdOne);
+            Core.inRange(frame, redLower, redUpper, frame);
+            redFirst = new Mat(frame, theFirstOne);
+            redSecond = new Mat(frame, theSecondOne);
+            redThird = new Mat(frame, theThirdOne);
         } else {
             Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_RGB2HSV);
-            Core.inRange(hsv, blueLower, blueUpper, threshold);
-            blueFirst = new Mat(threshold, theFirstOne);
-            blueSecond = new Mat(threshold, theSecondOne);
-            blueThird = new Mat(threshold, theThirdOne);
+            Core.inRange(hsv, redLower, redUpper, threshold);
+            redFirst = new Mat(threshold, theFirstOne);
+            redSecond = new Mat(threshold, theSecondOne);
+            redThird = new Mat(threshold, theThirdOne);
         }
         Imgproc.rectangle(frame, theFirstOne, new Scalar(100,0,222));
         Imgproc.rectangle(frame, theSecondOne, new Scalar(100,0,222));
         Imgproc.rectangle(frame, theThirdOne, new Scalar(100,0,222));
 
         //AREA 1
-        detectContours(blueFirst, theFirstOne, contours, frame);
+        detectContours(redFirst, theFirstOne, contours, frame, 1);
 
         //AREA 2
-        detectContours(blueSecond, theSecondOne, contours, frame);
+        detectContours(redSecond, theSecondOne, contours, frame, 2);
 
-        //AREA 3
-        detectContours(blueThird, theThirdOne, contours, frame);
         return frame;
     }
 
@@ -85,7 +85,7 @@ public class ducProcessor implements VisionProcessor {
         return boundingRect.height;
     }
 
-    private void detectContours(Mat box, Rect rectangle, ArrayList<MatOfPoint> contours, Mat frame) {
+    private void detectContours(Mat box, Rect rectangle, ArrayList<MatOfPoint> contours, Mat frame, double number) {
 
         Imgproc.findContours(box, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
@@ -110,6 +110,14 @@ public class ducProcessor implements VisionProcessor {
         }
 
         Imgproc.putText(frame, Integer.toString(contours.size()), new Point(rectangle.x, 400), Imgproc.FONT_HERSHEY_COMPLEX, 1, new Scalar(255,255,255));
+        if (contours.size() > 1) {
+            duckPosition = number + 1;
+        }
         contours.clear();
+
+    }
+
+    public double getDuckPosition() {
+        return duckPosition;
     }
 }

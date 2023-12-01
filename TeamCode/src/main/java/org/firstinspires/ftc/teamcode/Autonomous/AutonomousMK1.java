@@ -1,12 +1,20 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Autonomous;
+
+import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.processors.ducProcessor;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 /*
@@ -23,6 +31,8 @@ public class AutonomousMK1<myIMUparameters> extends LinearOpMode {
     private DcMotor backRight;
     private IMU imu;
     private YawPitchRollAngles robotOrientation;
+    private ducProcessor ducProcessor;
+    private double duckPosition;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -39,9 +49,19 @@ public class AutonomousMK1<myIMUparameters> extends LinearOpMode {
         double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
 
-        //while (!isStarted() && !isStopRequested())
+        ducProcessor = new ducProcessor();
 
-        waitForStart();
+        VisionPortal visionPortal = new VisionPortal.Builder()
+                .addProcessor(ducProcessor)
+                .setCameraResolution(new Size(640, 480))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .build();
+
+        while (!isStarted() && !isStopRequested()) {
+            duckPosition = ducProcessor.getDuckPosition();
+            telemetry.addData("DUCK POSITION", duckPosition);
+            telemetry.update();
+        }
 
         linearMovement(1.0, 1440, "Test");
         linearMovement(0.5, -1440, "Test");
