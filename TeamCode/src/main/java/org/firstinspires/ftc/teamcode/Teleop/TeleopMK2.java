@@ -38,6 +38,7 @@ public class TeleopMK2 extends LinearOpMode {
 
     Servo servoDoor;
     Servo servoWrist;
+    Servo servoLauncher;
     CRServo servoIntake;
 
     double tgtPowerForward = 0;
@@ -99,6 +100,7 @@ public class TeleopMK2 extends LinearOpMode {
 
         servoWrist.setPosition(0);
         servoDoor.setPosition(0.5);
+        servoLauncher.setPosition(0);
 
         waitForStart();
 
@@ -238,6 +240,7 @@ public class TeleopMK2 extends LinearOpMode {
         servoDoor = hardwareMap.get(Servo.class, "door");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
         servoIntake = hardwareMap.get(CRServo.class,"intake");
+        servoLauncher = hardwareMap.get(Servo.class,"launcher");
 
     }
 

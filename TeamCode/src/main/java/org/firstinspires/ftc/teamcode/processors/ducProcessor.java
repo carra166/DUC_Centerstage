@@ -17,18 +17,18 @@ import java.util.ArrayList;
 
 public class ducProcessor implements VisionProcessor {
 
-    public Scalar redLower = new Scalar(0, 141.7, 109.1);
-    public Scalar redUpper = new Scalar(9.9, 255, 247.9);
+    public Scalar redLower = new Scalar(107.7, 141.7, 109.1);
+    public Scalar redUpper = new Scalar(201.2, 255, 247.9);
 
     public Rect theFirstOne = new Rect(150, 370, 40, 40);
-    public Rect theSecondOne = new Rect(500, 200, 40, 40);
+    public Rect theSecondOne = new Rect(450, 375, 40, 40);
     public Rect theThirdOne = new Rect(600, 200, 40, 40);
 
     public Mat redFirst = new Mat();
     public Mat redSecond = new Mat();
     public Mat redThird = new Mat();
 
-    boolean tuning = true;
+    boolean tuning = false;
     public Mat hsv = new Mat();
     public Mat threshold = new Mat();
 
