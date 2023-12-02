@@ -3,20 +3,20 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 import android.util.Size;
 
 import com.arcrobotics.ftclib.util.InterpLUT;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.processors.ducProcessorRedRight;
+import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueLeft;
+import org.firstinspires.ftc.teamcode.processors.ducProcessorRedLeft;
 import org.firstinspires.ftc.vision.VisionPortal;
-
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.Servo;
 
 /*
 10430 AUTONOMOUS PROGRAM
@@ -24,7 +24,7 @@ Uses encoders
 */
 @Autonomous
 //@Disabled
-public class AutoRedRight<myIMUparameters> extends LinearOpMode {
+public class AutoBlueLeft<myIMUparameters> extends LinearOpMode {
 
     int step = 0;
     boolean runOnce = true;
@@ -40,7 +40,7 @@ public class AutoRedRight<myIMUparameters> extends LinearOpMode {
 
     private IMU imu;
     private YawPitchRollAngles robotOrientation;
-    private ducProcessorRedRight ducProcessor;
+    private ducProcessorBlueLeft ducProcessor;
     private double duckPosition;
 
     InterpLUT armAngles;
@@ -72,7 +72,7 @@ public class AutoRedRight<myIMUparameters> extends LinearOpMode {
         double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
 
-        ducProcessor = new ducProcessorRedRight();
+        ducProcessor = new ducProcessorBlueLeft();
 
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .addProcessor(ducProcessor)
@@ -103,7 +103,7 @@ public class AutoRedRight<myIMUparameters> extends LinearOpMode {
                 case 0:
                     if (runOnce) {
                         if (duckPosition == 2) {
-                            linearMovement(0.2, (535 * 2) + 250, "forward");
+                            linearMovement(0.2, (535 * 2) + 50, "forward");
                         } else {
                             linearMovement(0.2, (535 * 2) + 50, "forward");
                         }
@@ -136,7 +136,7 @@ public class AutoRedRight<myIMUparameters> extends LinearOpMode {
                         if (duckPosition == 2) {
                             servoIntake.setPower(0);
                         } else if (duckPosition == 3) {
-                            linearMovement(0.2, 850, "forward");
+                            linearMovement(0.2, 300, "backward");
                         } else {
                             linearMovement(0.2, 100, "strafeRight");
                         }
@@ -152,7 +152,7 @@ public class AutoRedRight<myIMUparameters> extends LinearOpMode {
                         if (duckPosition == 2) {
                             //come back to this putting pixel on board
                         } else if (duckPosition == 3) {
-                            linearMovement(0.2, (480 * 4), "turnRight");
+                            //inearMovement(0.2, (480 * 4), "turnRight");
                         } else {
                             linearMovement(0.2, 100, "forward");
                         }
@@ -202,7 +202,7 @@ public class AutoRedRight<myIMUparameters> extends LinearOpMode {
                         if (duckPosition == 2) {
                             //come back to this putting pixel on board
                         } else if (duckPosition == 3) {
-                            linearMovement(0.2, 300, "backward");
+                            //linearMovement(0.2, 300, "backward");
                         } else {
                             servoIntake.setPower(0);
                         }
@@ -220,8 +220,8 @@ public class AutoRedRight<myIMUparameters> extends LinearOpMode {
                         if (duckPosition == 2) {
                             //come back to this putting pixel on board
                         } else if (duckPosition == 3) {
-                            servoWrist.setPosition(1);
-                            armPosition = 90;
+                            //servoWrist.setPosition(1);
+                            //armPosition = 90;
                         } else {
                             servoIntake.setPower(0);
                         }

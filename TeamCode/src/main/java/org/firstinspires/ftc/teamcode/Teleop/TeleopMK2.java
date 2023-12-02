@@ -38,7 +38,7 @@ public class TeleopMK2 extends LinearOpMode {
 
     Servo servoDoor;
     Servo servoWrist;
-    Servo servoLauncher;
+    CRServo servoLauncher;
     CRServo servoIntake;
 
     double tgtPowerForward = 0;
@@ -77,19 +77,6 @@ public class TeleopMK2 extends LinearOpMode {
         armAngles.add(1000, 181); //safety 2
         armAngles.createLUT();
 
-        AprilTagProcessor tagProcessor = new AprilTagProcessor.Builder()
-                .setDrawAxes(true)
-                .setDrawTagID(true)
-                .setDrawCubeProjection(true)
-                .setDrawTagOutline(true)
-                .build();
-
-        VisionPortal visionPortal = new VisionPortal.Builder()
-                .addProcessor(tagProcessor)
-                .setCameraResolution(new Size(640, 480))
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .build();
-
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -100,7 +87,6 @@ public class TeleopMK2 extends LinearOpMode {
 
         servoWrist.setPosition(0);
         servoDoor.setPosition(0.5);
-        servoLauncher.setPosition(0);
 
         waitForStart();
 
@@ -151,39 +137,24 @@ public class TeleopMK2 extends LinearOpMode {
                 downPower = 0;
             }
 
-            if(gamepad1.b && canMove) {
-                if (tagProcessor.getDetections().size() > 0) {
-                    canMove = false;
-                    AprilTagDetection tag = tagProcessor.getDetections().get(0);
-                    telemetry.addData("AprilTags", "FOUND");
-                    telemetry.addData("Range", tag.ftcPose.range);
-                    sleep(5000);
-                    canMove = true;
-                } else {
-                    telemetry.addData("AprilTags", "NONE FOUND");
-                }
+            if (gamepad1.x) {
+                servoLauncher.setPower(-1);
             }
+
+            if (gamepad1.y) {
+                servoLauncher.setPower(0);
+            }
+
 
             if (gamepad1.x) {
                 while (gamepad1.x) {}
 
             }
 
-            if (tagProcessor.getDetections().size() > 0 && tagProcessor.getDetections().get(0).metadata != null) {
-                AprilTagDetection tag = tagProcessor.getDetections().get(0);
-                telemetry.addData("AprilTags", "FOUND");
-                telemetry.addData("Range", tag.ftcPose.range);
-                telemetry.addData("Bearing", tag.ftcPose.bearing);
-                //bearing to the right is positive, left is negative
-
-            } else {
-                telemetry.addData("AprilTags", "NONE FOUND");
-            }
-
             tgtPowerForward = (-this.gamepad1.left_stick_y / division);
             tgtPowerStrafe = (-this.gamepad1.left_stick_x / division);
             tgtPowerTurn = (this.gamepad1.right_stick_x / division);
-            tgtPowerArm = ((this.gamepad2.left_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower );
+            tgtPowerArm = ((this.gamepad2.left_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
 
             //sets motor powereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeew44444444444444    q1`1`
             //this comment corrupted but its just too funny to delete
@@ -240,7 +211,7 @@ public class TeleopMK2 extends LinearOpMode {
         servoDoor = hardwareMap.get(Servo.class, "door");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
         servoIntake = hardwareMap.get(CRServo.class,"intake");
-        servoLauncher = hardwareMap.get(Servo.class,"launcher");
+        servoLauncher = hardwareMap.get(CRServo.class,"launcher");
 
     }
 
