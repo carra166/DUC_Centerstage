@@ -1,6 +1,14 @@
 package org.firstinspires.ftc.teamcode.Teleop;
 
-import android.util.Size;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import android.os.Environment;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.util.InterpLUT;
@@ -9,17 +17,12 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 /*
 10430 TELEOP
@@ -27,7 +30,10 @@ Motor gamepad controls
 */
 @TeleOp
 @Config
-public class TeleopMK2 extends LinearOpMode {
+public class AutoDriving extends LinearOpMode {
+
+    private static final String BASE_FOLDER_NAME = "autonomousTexts";
+    public static String textFileName = "test";
 
     private DcMotor frontLeft;
     private DcMotor frontRight;
@@ -38,31 +44,28 @@ public class TeleopMK2 extends LinearOpMode {
     IMU imu;
     YawPitchRollAngles robotOrientation;
 
-    Servo servoClaw;
+    Servo servoDoor;
     Servo servoWrist;
-    Servo servoLauncher;
-    Servo servoPooper;
+    CRServo servoLauncher;
+    CRServo servoIntake;
 
     double tgtPowerForward = 0;
     double tgtPowerStrafe = 0;
     double tgtPowerTurn = 0;
     double tgtPowerArm;
 
-    double kStrafing = 1;
-
     double division = 1;
 
     boolean inputOn = false;
     boolean canInputOn = true;
-    public static double servoPos = 0.3;
-
-    boolean openClaw = false;
 
     boolean canMove = true;
 
     InterpLUT armAngles;
-    public static double kCos = 0.1;
+    double kCos = 0.25;
     double downPower = 0;
+
+    String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME;
 
     @Override
     public void runOpMode() {
@@ -92,10 +95,9 @@ public class TeleopMK2 extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        servoWrist.setPosition(0.1);
-        servoClaw.setPosition(0);
-        servoLauncher.setPosition(0);
-        servoPooper.setPosition(0.5);
+        servoWrist.setPosition(0);
+        //servoDoor.setPosition(0.5);
+
 
         waitForStart();
 
@@ -105,70 +107,77 @@ public class TeleopMK2 extends LinearOpMode {
             holding down the b button on the controller*/
             if (this.gamepad1.right_trigger > 0) {
                 //slow
-                division = 3;
+                division = 5;
             } else if (this.gamepad1.left_trigger > 0) {
                 //fast
-                division = 1;
+                division = 2;
             } else {
                 //normal
-                division = 2;
+                division = 3.5;
             }
-
-            if (gamepad2.y) {
-                downPower = -0.3;
-            } else {
-                downPower = 0;
-            }
-
-            if (gamepad1.a) {
-                servoWrist.setPosition(0.9);
-            }
-            if (gamepad1.b) {
-                servoWrist.setPosition(servoPos);
-            }
-
 
             if (gamepad1.x) {
                 while (gamepad1.x) {}
-                if (openClaw) {
-                    servoClaw.setPosition(0.2);
-                    openClaw = false;
-                } else {
-                    servoClaw.setPosition(0);
-                    openClaw = true;
+                try {
+                    FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt", true); // Appending mode
+                    double[] numbers = {frontRight.getCurrentPosition(), frontLeft.getCurrentPosition(), backRight.getCurrentPosition(), backLeft.getCurrentPosition()};
+                    StringBuilder sb = new StringBuilder();
+                    for (double num : numbers) {
+                        sb.append(Double.toString(num)).append(" "); // Converting doubles to strings and appending
+                    }
+                    writer.write(sb.toString().trim() + "\n"); // Appending a new line with the formatted string
+                    writer.close();
+
+                    frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+                    frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+                    System.out.println("Doubles appended successfully to the file.");
+
+                } catch (IOException e) {
+                    System.out.println("An error occurred.");
+                    e.printStackTrace();
+                }
+            }
+
+            if (gamepad1.b) {
+                while (gamepad1.b) {}
+                try {
+                    FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt"); // Appending mode
+                    writer.write(""); // Appending a new line with the formatted string
+                    writer.close();
+                } catch (IOException e) {
+                    System.out.println("An error occurred.");
+                    e.printStackTrace();
                 }
             }
 
             tgtPowerForward = (-this.gamepad1.left_stick_y / division);
             tgtPowerStrafe = (-this.gamepad1.left_stick_x / division);
             tgtPowerTurn = (this.gamepad1.right_stick_x / division);
-            tgtPowerArm = ((this.gamepad1.right_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
+            tgtPowerArm = ((this.gamepad2.left_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
 
             //sets motor powereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeew44444444444444    q1`1`
             //this comment corrupted but its just too funny to delete
-            if (canMove) {
-                setPowerAll(
-                        -tgtPowerForward + (tgtPowerStrafe * kStrafing) - tgtPowerTurn,
+            setPowerAll(
+                        -tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
                         tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
-                        -tgtPowerForward - (tgtPowerStrafe * kStrafing) - tgtPowerTurn,
+                        -tgtPowerForward - tgtPowerStrafe - tgtPowerTurn,
                         tgtPowerForward - tgtPowerStrafe - tgtPowerTurn
-                );
-            }
-            armMotor.setPower(tgtPowerArm);
-            armMotor2.setPower(-tgtPowerArm);
+            );
+            /*armMotor.setPower(tgtPowerArm);
+            armMotor2.setPower(-tgtPowerArm);*/
 
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
             AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
 
-            telemetry.addData("Yaw", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
-            telemetry.addData("current wrist amount", servoWrist.getPosition());
-            telemetry.addData("right stick y", this.gamepad1.right_stick_y);
-
-            telemetry.addData("current arm position", armMotor.getCurrentPosition());
-            telemetry.addData("arm angle", armAngles.get(armMotor.getCurrentPosition()));
-            telemetry.addData("gravity compensation", calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos));
-            telemetry.addData("current tgt arm", tgtPowerArm);
-            telemetry.addData("current arm motor power", armMotor.getPower());
+            telemetry.addData("front right wheel encoder position", frontRight.getCurrentPosition());
             telemetry.update();
         }
     }
@@ -196,10 +205,20 @@ public class TeleopMK2 extends LinearOpMode {
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        servoClaw = hardwareMap.get(Servo.class, "claw");
+        servoDoor = hardwareMap.get(Servo.class, "door");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
-        servoLauncher = hardwareMap.get(Servo.class, "launcher");
-        servoPooper = hardwareMap.get(Servo.class, "pooper");
+        servoIntake = hardwareMap.get(CRServo.class,"intake");
+        servoLauncher = hardwareMap.get(CRServo.class,"intake");
+
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
     }
 
