@@ -31,7 +31,7 @@ Uses encoders
 */
 @Autonomous
 @Config
-public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
+public class Autonomous10430<myIMUparameters> extends LinearOpMode {
 
     int step = 0;
     boolean runOnce = true;
@@ -103,7 +103,6 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
         servoClaw.setPosition(0);
         servoLauncher.setPosition(0);
         servoPooper.setPosition(0.5);
-
         while (!isStarted() && !isStopRequested()) {
             duckPosition = ducProcessor.getDuckPosition();
             telemetry.addData("DUCK POSITION", duckPosition);
@@ -112,7 +111,9 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
 
         //start auto
 
-        /*while (isStarted() && !isStopRequested()) {
+        List<double[]> parsedLines = readAndParseDoublesFromFile();
+
+        while (isStarted() && !isStopRequested()) {
             tgtArmPower = calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
             armMotor.setPower(tgtArmPower);
             armMotor2.setPower(-tgtArmPower);
@@ -120,23 +121,61 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
             switch (step) {
                 case 0:
                     if (runOnce) {
-
+                        runToParsedPosition(parsedLines.get(step), 0.1);
                         runOnce = false;
                     }
                     if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
                         step++;
                         runOnce = true;
                     }
-                break;
-            }*/
+                    break;
+                case 1:
+                    if (runOnce) {
+                        runToParsedPosition(parsedLines.get(step), 0.1);
+                        runOnce = false;
+                    }
+                    if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 2:
+                    if (runOnce) {
+                        runToParsedPosition(parsedLines.get(step), 0.1);
+                        runOnce = false;
+                    }
+                    if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 3:
+                    servoWrist.setPosition(0.3);
+                    sleep(500);
+                    step++;
+                    break;
+                case 4:
+                    if (runOnce) {
+                        armPosition = 100;
+                        telemetry.addData("armpos", armPosition);
+                        runOnce = false;
+                    }
+                    if (armAngles.get(armMotor.getCurrentPosition()) > 99) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
 
-        List<double[]> parsedLines = readAndParseDoublesFromFile();
+            }
+            telemetry.addData("hello", step);
+            telemetry.update();
+        }
+
+
 
         for (double[] line : parsedLines) {
             runToParsedPosition(line, 0.1);
         }
-
-        //linearMovement(1.0, 1440, "Test");
 
         telemetry.addLine(parsedLines.get(0)[0]+"");
         telemetry.update();
@@ -151,8 +190,7 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
 
         if (myLine[0] == 69420) {
             servoPooper.setPosition(0);
-            sleep(1000);
-            servoPooper.setPosition(0.5);
+            sleep(500);
             return;
         }
 
@@ -218,7 +256,7 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
                 frontLeft.setTargetPosition(distance);
                 backRight.setTargetPosition(-distance);
                 backLeft.setTargetPosition(distance);
-            break;
+                break;
         } //this takes the type input variable and sets the direction accordingly
         //for example, the "forward" input would make all motors go forward (obviously)
 
@@ -273,20 +311,23 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
                 String[] numbersAsString = line.split(" ");
                 double[] parsedNumbers = new double[numbersAsString.length];
                 for (int i = 0; i < numbersAsString.length; i++) {
-                    parsedNumbers[i] = Double.parseDouble(numbersAsString[i]);
+                    if (stringCompare(numbersAsString[i], "pooper") == 0) {
+                        parsedNumbers = new double[]{69420};
+                    } else {
+                        parsedNumbers[i] = Double.parseDouble(numbersAsString[i]);
+                    }
                 }
                 parsedLines.add(parsedNumbers);
             }
 
             bufferedReader.close();
         } catch (IOException e) {
-            System.out.println("An error occurred while reading doubles.");
             e.printStackTrace();
         }
         return parsedLines;
     }
 
-    //i love chat-gpt!
+    //i love chat-gpt! if this code doesnt work dont blame me
     public static double findHighest(double[] arr) {
         double highest = arr[0];
         double highestI = 0;
@@ -297,6 +338,35 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
             }
         }
         return highestI;
+    }
+
+    public static int stringCompare(String str1, String str2)
+    {
+
+        int l1 = str1.length();
+        int l2 = str2.length();
+        int lmin = Math.min(l1, l2);
+
+        for (int i = 0; i < lmin; i++) {
+            int str1_ch = (int)str1.charAt(i);
+            int str2_ch = (int)str2.charAt(i);
+
+            if (str1_ch != str2_ch) {
+                return str1_ch - str2_ch;
+            }
+        }
+
+        // Edge case for strings like
+        // String 1="Geeks" and String 2="Geeksforgeeks"
+        if (l1 != l2) {
+            return l1 - l2;
+        }
+
+        // If none of the above conditions is true,
+        // it implies both the strings are equal
+        else {
+            return 0;
+        }
     }
 
 }

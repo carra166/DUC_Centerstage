@@ -44,10 +44,10 @@ public class AutoDriving extends LinearOpMode {
     IMU imu;
     YawPitchRollAngles robotOrientation;
 
-    Servo servoDoor;
+    Servo servoClaw;
     Servo servoWrist;
-    CRServo servoLauncher;
-    CRServo servoIntake;
+    Servo servoLauncher;
+    Servo servoPooper;
 
     double tgtPowerForward = 0;
     double tgtPowerStrafe = 0;
@@ -95,9 +95,10 @@ public class AutoDriving extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        servoWrist.setPosition(0);
-        //servoDoor.setPosition(0.5);
-
+        servoWrist.setPosition(0.1);
+        servoClaw.setPosition(0);
+        servoLauncher.setPosition(0);
+        servoPooper.setPosition(0.5);
 
         waitForStart();
 
@@ -153,7 +154,17 @@ public class AutoDriving extends LinearOpMode {
                     writer.write(""); // Appending a new line with the formatted string
                     writer.close();
                 } catch (IOException e) {
-                    System.out.println("An error occurred.");
+                    e.printStackTrace();
+                }
+            }
+
+            if (gamepad1.y) {
+                while (gamepad1.y) {}
+                try {
+                    FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt", true); // Appending mode
+                    writer.write("pooper\n"); // Appending a new line with the formatted string
+                    writer.close();
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -205,10 +216,10 @@ public class AutoDriving extends LinearOpMode {
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        servoDoor = hardwareMap.get(Servo.class, "door");
+        servoClaw = hardwareMap.get(Servo.class, "claw");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
-        servoIntake = hardwareMap.get(CRServo.class,"intake");
-        servoLauncher = hardwareMap.get(CRServo.class,"intake");
+        servoLauncher = hardwareMap.get(Servo.class, "launcher");
+        servoPooper = hardwareMap.get(Servo.class, "pooper");
 
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

@@ -105,7 +105,7 @@ public class TeleopMK2 extends LinearOpMode {
             holding down the b button on the controller*/
             if (this.gamepad1.right_trigger > 0) {
                 //slow
-                division = 3;
+                division = 4;
             } else if (this.gamepad1.left_trigger > 0) {
                 //fast
                 division = 1;
