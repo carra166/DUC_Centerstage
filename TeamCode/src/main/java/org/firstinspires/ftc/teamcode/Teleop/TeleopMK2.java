@@ -48,20 +48,20 @@ public class TeleopMK2 extends LinearOpMode {
     double tgtPowerTurn = 0;
     double tgtPowerArm;
 
-    double kStrafing = 1;
+    public static double kStrafing = 1;
 
     double division = 1;
 
     boolean inputOn = false;
     boolean canInputOn = true;
-    public static double servoPos = 0.3;
+    double servoPos = 0.2;
 
-    boolean openClaw = false;
+    boolean openClaw = true; //ignore the fact that it's inverted
 
     boolean canMove = true;
 
     InterpLUT armAngles;
-    public static double kCos = 0.1;
+    double kCos = 0.1;
     double downPower = 0;
 
     @Override

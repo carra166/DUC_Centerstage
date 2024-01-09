@@ -117,6 +117,7 @@ public class AutoDriving extends LinearOpMode {
                 division = 3.5;
             }
 
+            //write the encoder values to the text file
             if (gamepad1.x) {
                 while (gamepad1.x) {}
                 try {
@@ -147,6 +148,7 @@ public class AutoDriving extends LinearOpMode {
                 }
             }
 
+            //clear text file
             if (gamepad1.b) {
                 while (gamepad1.b) {}
                 try {
@@ -158,11 +160,24 @@ public class AutoDriving extends LinearOpMode {
                 }
             }
 
+            //pooper function call
             if (gamepad1.y) {
                 while (gamepad1.y) {}
                 try {
-                    FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt", true); // Appending mode
-                    writer.write("pooper\n"); // Appending a new line with the formatted string
+                    FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt", true);
+                    writer.write("pooper\n");
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            //backboard placement function call
+            if (gamepad1.a) {
+                while (gamepad1.a) {}
+                try {
+                    FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt", true);
+                    writer.write("backboard\n");
                     writer.close();
                 } catch (IOException e) {
                     e.printStackTrace();

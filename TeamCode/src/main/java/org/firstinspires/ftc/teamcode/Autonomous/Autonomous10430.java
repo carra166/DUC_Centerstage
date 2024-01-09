@@ -182,15 +182,35 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
 
     }
 
-    private double inchesToEncoders(double inches) {
-        return inches;
+    private void caseStatement(boolean finishedCondition, List<double[]> parsedLines) {
+        if (runOnce) {
+            runToParsedPosition(parsedLines.get(step), 0.1);
+            runOnce = false;
+        }
+        if (finishedCondition) {
+            step++;
+            runOnce = true;
+        }
     }
 
     private void runToParsedPosition(double[] myLine, double power) {
 
         if (myLine[0] == 69420) {
+            //open pooper
             servoPooper.setPosition(0);
             sleep(500);
+            return;
+        }
+        if (myLine[0] == 6969) {
+            //put pixel on backboard
+            servoWrist.setPosition(0.3);
+            sleep(200);
+            armPosition = 100;
+            telemetry.addData("armpos", armPosition);
+            while (!(armAngles.get(armMotor.getCurrentPosition()) > 99)) {}
+            servoClaw.setPosition(0.2);
+            sleep(500);
+            servoClaw.setPosition(0);
             return;
         }
 
@@ -311,8 +331,12 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
                 String[] numbersAsString = line.split(" ");
                 double[] parsedNumbers = new double[numbersAsString.length];
                 for (int i = 0; i < numbersAsString.length; i++) {
+                    //these stupid little functions basically set the value of array in place of the number because
+                    //java arrays are stupid and can only do one kind of value in an array GRAHHHH!!!!!
                     if (stringCompare(numbersAsString[i], "pooper") == 0) {
                         parsedNumbers = new double[]{69420};
+                    } else if (stringCompare(numbersAsString[i], "backboard") == 0) {
+                        parsedNumbers = new double[]{6969};
                     } else {
                         parsedNumbers[i] = Double.parseDouble(numbersAsString[i]);
                     }
