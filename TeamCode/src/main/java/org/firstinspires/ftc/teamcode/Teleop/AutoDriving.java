@@ -96,7 +96,7 @@ public class AutoDriving extends LinearOpMode {
         telemetry.update();
 
         servoWrist.setPosition(0.1);
-        servoClaw.setPosition(0);
+        servoClaw.setPosition(0.5);
         servoLauncher.setPosition(0);
         servoPooper.setPosition(0.5);
 
@@ -139,8 +139,6 @@ public class AutoDriving extends LinearOpMode {
                     frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-                    System.out.println("Doubles appended successfully to the file.");
 
                 } catch (IOException e) {
                     System.out.println("An error occurred.");

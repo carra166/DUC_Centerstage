@@ -15,13 +15,13 @@ import org.opencv.imgproc.Moments;
 
 import java.util.ArrayList;
 
-public class ducProcessorRedRight implements VisionProcessor {
+public class ducProcessorRedBackstage implements VisionProcessor {
 
     public Scalar redLower = new Scalar(107.7, 141.7, 109.1);
     public Scalar redUpper = new Scalar(201.2, 255, 247.9);
 
-    public Rect theFirstOne = new Rect(150, 370, 40, 40);
-    public Rect theSecondOne = new Rect(450, 375, 40, 40);
+    public Rect theFirstOne = new Rect(120, 370, 40, 40);
+    public Rect theSecondOne = new Rect(410, 380, 40, 40);
     public Rect theThirdOne = new Rect(600, 200, 40, 40);
 
     public Mat redFirst = new Mat();
@@ -60,6 +60,8 @@ public class ducProcessorRedRight implements VisionProcessor {
         Imgproc.rectangle(frame, theFirstOne, new Scalar(100,0,222));
         Imgproc.rectangle(frame, theSecondOne, new Scalar(100,0,222));
         Imgproc.rectangle(frame, theThirdOne, new Scalar(100,0,222));
+
+        duckPosition = 1;
 
         //AREA 1
         detectContours(redFirst, theFirstOne, contours, frame, 1);

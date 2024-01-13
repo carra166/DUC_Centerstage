@@ -8,7 +8,6 @@ import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -16,7 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueBackstage;
+import org.firstinspires.ftc.teamcode.processors.ducProcessorRedFrontstage;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.io.BufferedReader;
@@ -31,14 +30,15 @@ Uses encoders
 */
 @Autonomous
 @Config
-public class Autonomous10430<myIMUparameters> extends LinearOpMode {
+public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
 
     int step = 0;
     boolean runOnce = true;
 
     private static final String BASE_FOLDER_NAME = "autonomousTexts";
-    public static final String AUTONOMOUS_DIRECTORY = "";
-    static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY;
+    public static final String AUTONOMOUS_DIRECTORY = "frontstageRed";
+    public static final String PARKING_DIRECTORY = "left";
+    static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+PARKING_DIRECTORY;
     public static String textFileName = "center";
     public static double speed = 0.3;
 
@@ -55,7 +55,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
 
     private IMU imu;
     private YawPitchRollAngles robotOrientation;
-    private ducProcessorBlueBackstage ducProcessor;
+    private ducProcessorRedFrontstage ducProcessor;
     private double duckPosition;
 
     InterpLUT armAngles;
@@ -89,7 +89,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
 
-        ducProcessor = new ducProcessorBlueBackstage();
+        ducProcessor = new ducProcessorRedFrontstage();
 
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .addProcessor(ducProcessor)
@@ -103,11 +103,22 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {}
         servoWrist.setPosition(0.1);
         servoClaw.setPosition(0.5);
-        servoLauncher.setPosition(0);
+        servoLauncher.setPosition(0.2);
         servoPooper.setPosition(0.5);
         while (!isStarted() && !isStopRequested()) {
             duckPosition = ducProcessor.getDuckPosition();
             telemetry.addData("DUCK POSITION", duckPosition);
+            switch((int)duckPosition) {
+                case 1:
+                    textFileName = "right";
+                break;
+                case 2:
+                    textFileName = "left";
+                break;
+                case 3:
+                    textFileName = "center";
+                break;
+            }
             telemetry.addData("TARGET POSITION", textFileName);
             telemetry.update();
         }
@@ -122,8 +133,6 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
             armMotor2.setPower(-tgtArmPower);
 
             switch (step) {
-                case 100:
-                    break;
                 default:
                     caseStatement(parsedLines);
                 break;
@@ -170,10 +179,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         if (myLine[0] == 69420) {
             //open pooper
             servoPooper.setPosition(0);
-            sleep(500);
-            return;
-        }
-        if (myLine[0] == 6969) {
+            sleep(250);
             return;
         }
 

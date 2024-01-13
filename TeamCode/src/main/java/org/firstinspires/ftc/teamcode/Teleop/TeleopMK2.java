@@ -54,14 +54,14 @@ public class TeleopMK2 extends LinearOpMode {
 
     boolean inputOn = false;
     boolean canInputOn = true;
-    double servoPos = 0.2;
 
     boolean openClaw = true; //ignore the fact that it's inverted
+    boolean wristPos = true; //ignore the fact that it's inverted
 
     boolean canMove = true;
 
     InterpLUT armAngles;
-    double kCos = 0.1;
+    double kCos = 0.12;
     double downPower = 0;
 
     @Override
@@ -76,12 +76,12 @@ public class TeleopMK2 extends LinearOpMode {
         robotOrientation = imu.getRobotYawPitchRollAngles();
 
         armAngles = new InterpLUT();
-        armAngles.add(-100, -41); //safety 1
+        armAngles.add(-10000, -41); //safety 1
         armAngles.add(0, -40); //init position
         armAngles.add(100, 0); //straight out (forward)
         armAngles.add(400, 90); //straight up
         armAngles.add(666, 180); //straight back
-        armAngles.add(1000, 181); //safety 2
+        armAngles.add(10000, 181); //safety 2
         armAngles.createLUT();
 
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -93,13 +93,19 @@ public class TeleopMK2 extends LinearOpMode {
         telemetry.update();
 
         servoWrist.setPosition(0.1);
-        servoClaw.setPosition(0);
-        servoLauncher.setPosition(0);
+        servoClaw.setPosition(0.5);
+        servoLauncher.setPosition(0.2);
         servoPooper.setPosition(0.5);
 
         waitForStart();
 
         while (opModeIsActive()) {
+
+            //gamepad 1
+
+            if (gamepad1.right_bumper && gamepad1.left_bumper) {
+                servoLauncher.setPosition(0);
+            }
 
             /*this cuts the target power in half if you're
             holding down the b button on the controller*/
@@ -114,35 +120,41 @@ public class TeleopMK2 extends LinearOpMode {
                 division = 2;
             }
 
-            if (gamepad2.y) {
-                downPower = -0.3;
-            } else {
-                downPower = 0;
-            }
 
-            if (gamepad1.a) {
-                servoWrist.setPosition(0.9);
-            }
-            if (gamepad1.b) {
-                servoWrist.setPosition(servoPos);
-            }
-
-
-            if (gamepad1.x) {
-                while (gamepad1.x) {}
+            //gamepad 2
+            if (gamepad2.a) {
+                while (gamepad2.a) {}
                 if (openClaw) {
-                    servoClaw.setPosition(0.2);
+                    servoClaw.setPosition(0.675);
                     openClaw = false;
                 } else {
-                    servoClaw.setPosition(0);
+                    servoClaw.setPosition(0.5);
                     openClaw = true;
                 }
+            }
+
+
+            if (gamepad2.x) {
+                while (gamepad2.x) {}
+                if (wristPos) {
+                    servoWrist.setPosition(0.3); //arm up position
+                    wristPos = false;
+                } else {
+                    servoWrist.setPosition(0.9); //arm down position
+                    wristPos = true;
+                }
+            }
+
+            if (gamepad2.y) {
+                downPower = -1;
+            } else {
+                downPower = 0;
             }
 
             tgtPowerForward = (-this.gamepad1.left_stick_y / division);
             tgtPowerStrafe = (-this.gamepad1.left_stick_x / division);
             tgtPowerTurn = (this.gamepad1.right_stick_x / division);
-            tgtPowerArm = ((this.gamepad1.right_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
+            tgtPowerArm = ((this.gamepad2.right_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
 
             //sets motor powereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeew44444444444444    q1`1`
             //this comment corrupted but its just too funny to delete

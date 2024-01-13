@@ -8,7 +8,6 @@ import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -31,13 +30,14 @@ Uses encoders
 */
 @Autonomous
 @Config
-public class Autonomous10430<myIMUparameters> extends LinearOpMode {
+public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOpMode {
 
     int step = 0;
     boolean runOnce = true;
 
+    public static final String PARK_POSITION = "left"; //LOWERCASE ONLY
     private static final String BASE_FOLDER_NAME = "autonomousTexts";
-    public static final String AUTONOMOUS_DIRECTORY = "";
+    public static final String AUTONOMOUS_DIRECTORY = "blueBackstage";
     static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY;
     public static String textFileName = "center";
     public static double speed = 0.3;
@@ -103,11 +103,22 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {}
         servoWrist.setPosition(0.1);
         servoClaw.setPosition(0.5);
-        servoLauncher.setPosition(0);
+        servoLauncher.setPosition(0.2);
         servoPooper.setPosition(0.5);
         while (!isStarted() && !isStopRequested()) {
             duckPosition = ducProcessor.getDuckPosition();
             telemetry.addData("DUCK POSITION", duckPosition);
+            switch((int)duckPosition) {
+                case 1:
+                    textFileName = "left";
+                break;
+                case 2:
+                    textFileName = "center";
+                break;
+                case 3:
+                    textFileName = "right";
+                break;
+            }
             telemetry.addData("TARGET POSITION", textFileName);
             telemetry.update();
         }
@@ -122,13 +133,120 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
             armMotor2.setPower(-tgtArmPower);
 
             switch (step) {
-                case 100:
-                    break;
-                default:
+                case 0:
                     caseStatement(parsedLines);
                 break;
+                case 1:
+                    caseStatement(parsedLines);
+                    break;
+                case 2:
+                    caseStatement(parsedLines);
+                    break;
+                case 3:
+                    caseStatement(parsedLines);
+                    break;
+                case 4:
+                    caseStatement(parsedLines);
+                    break;
+                case 5:
+                    caseStatement(parsedLines);
+                    break;
+                case 6:
+                    caseStatement(parsedLines);
+                    break;
+                case 7:
+                    caseStatement(parsedLines);
+                    break;
+                case 8:
+                    caseStatement(parsedLines);
+                    break;
+                case 9:
+                    caseStatement(parsedLines);
+                    break;
+                case 10:
+                    if (runOnce) {
+                        servoWrist.setPosition(0.3);
+                        runOnce = false;
+                    }
+                    if (servoWrist.getPosition() == 0.3) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 11:
+                    if (runOnce) {
+                        armPosition = 130;
+                        runOnce = false;
+                    }
+                    if (armAngles.get(armMotor.getCurrentPosition()) > 129) {
+                        countdown--;
+                        if (countdown<1) {
+                            step++;
+                            runOnce = true;
+                        }
+                    }
+                    break;
+                case 12:
+                    if (runOnce) {
+                        countdown = 100;
+                        servoClaw.setPosition(0.675);
+                        runOnce = false;
+                    }
+                    if (servoClaw.getPosition() == 0.675) {
+                        countdown--;
+                        if (countdown<1) {
+                            step++;
+                            runOnce = true;
+                        }
+                    }
+                    break;
+                case 13:
+                    if (runOnce) {
+                        servoWrist.setPosition(0.9);
+                        runOnce = false;
+                    }
+                    if (servoWrist.getPosition() == 0.9) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 14:
+                    if (runOnce) {
+                        countdown = 50;
+                        servoClaw.setPosition(0.5);
+                        runOnce = false;
+                    }
+                    if (servoClaw.getPosition() == 0.5) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 15:
+                    if (runOnce) {
+                        armPosition = 30;
+                        runOnce = false;
+                    }
+                    if (armAngles.get(armMotor.getCurrentPosition()) < 31) {
+                        countdown--;
+                        if (countdown<1) {
+                            step++;
+                            runOnce = true;
+                        }
+                    }
+                    break;
+                case 16:
+                    if (runOnce) {
+                        armPosition = -10;
+                        runOnce = false;
+                    }
+                    if (armAngles.get(armMotor.getCurrentPosition()) < -9) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+
             }
-            telemetry.addData("hello", step);
+            telemetry.addData("step:", step);
             telemetry.update();
         }
 
@@ -171,9 +289,6 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
             //open pooper
             servoPooper.setPosition(0);
             sleep(500);
-            return;
-        }
-        if (myLine[0] == 6969) {
             return;
         }
 
@@ -240,6 +355,34 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
                 backRight.setTargetPosition(-distance);
                 backLeft.setTargetPosition(distance);
                 break;
+
+            case "strafeLeft":
+                frontRight.setTargetPosition(distance);
+                frontLeft.setTargetPosition(distance);
+                backRight.setTargetPosition(-distance);
+                backLeft.setTargetPosition(-distance);
+                break;
+
+            case "strafeRight":
+                frontRight.setTargetPosition(-distance);
+                frontLeft.setTargetPosition(-distance);
+                backRight.setTargetPosition(distance);
+                backLeft.setTargetPosition(distance);
+                break;
+
+            case "turnLeft":
+                frontRight.setTargetPosition(distance);
+                frontLeft.setTargetPosition(distance);
+                backRight.setTargetPosition(distance);
+                backLeft.setTargetPosition(distance);
+                break;
+
+            case "turnRight":
+                frontRight.setTargetPosition(-distance);
+                frontLeft.setTargetPosition(-distance);
+                backRight.setTargetPosition(-distance);
+                backLeft.setTargetPosition(-distance);
+                break;
         } //this takes the type input variable and sets the direction accordingly
         //for example, the "forward" input would make all motors go forward (obviously)
 
@@ -248,7 +391,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        //Drive(power);
+        Drive(power, new double[]{ frontRight.getTargetPosition(), frontLeft.getTargetPosition(), backRight.getTargetPosition(), backLeft.getTargetPosition() });
 
         while (frontRight.isBusy() && frontLeft.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
             //telemetry.addData("Type of movement", type);

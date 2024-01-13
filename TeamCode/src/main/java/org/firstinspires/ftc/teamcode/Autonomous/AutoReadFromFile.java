@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -16,7 +17,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueLeft;
+import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueFrontstage;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.io.BufferedReader;
@@ -31,6 +32,7 @@ Uses encoders
 */
 @Autonomous
 @Config
+@Disabled
 public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
 
     int step = 0;
@@ -54,7 +56,7 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
 
     private IMU imu;
     private YawPitchRollAngles robotOrientation;
-    private ducProcessorBlueLeft ducProcessor;
+    private ducProcessorBlueFrontstage ducProcessor;
     private double duckPosition;
 
     InterpLUT armAngles;
@@ -87,7 +89,7 @@ public class AutoReadFromFile<myIMUparameters> extends LinearOpMode {
         double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
 
-        ducProcessor = new ducProcessorBlueLeft();
+        ducProcessor = new ducProcessorBlueFrontstage();
 
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .addProcessor(ducProcessor)

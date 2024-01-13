@@ -5,6 +5,7 @@ import android.util.Size;
 import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,8 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.processors.ducProcessorRedLeft;
-import org.firstinspires.ftc.teamcode.processors.ducProcessorRedRight;
+import org.firstinspires.ftc.teamcode.processors.ducProcessorRedFrontstage;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 /*
@@ -23,7 +23,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 Uses encoders
 */
 @Autonomous
-//@Disabled
+@Disabled
 public class AutoRedLeft<myIMUparameters> extends LinearOpMode {
 
     int step = 0;
@@ -40,7 +40,7 @@ public class AutoRedLeft<myIMUparameters> extends LinearOpMode {
 
     private IMU imu;
     private YawPitchRollAngles robotOrientation;
-    private ducProcessorRedLeft ducProcessor;
+    private ducProcessorRedFrontstage ducProcessor;
     private double duckPosition;
 
     InterpLUT armAngles;
@@ -72,7 +72,7 @@ public class AutoRedLeft<myIMUparameters> extends LinearOpMode {
         double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
 
-        ducProcessor = new ducProcessorRedLeft();
+        ducProcessor = new ducProcessorRedFrontstage();
 
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .addProcessor(ducProcessor)

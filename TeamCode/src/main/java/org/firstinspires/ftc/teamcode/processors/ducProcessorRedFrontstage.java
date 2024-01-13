@@ -15,26 +15,26 @@ import org.opencv.imgproc.Moments;
 
 import java.util.ArrayList;
 
-public class ducProcessorBlueLeft implements VisionProcessor {
+public class ducProcessorRedFrontstage implements VisionProcessor {
 
     public Scalar redLower = new Scalar(107.7, 141.7, 109.1);
     public Scalar redUpper = new Scalar(201.2, 255, 247.9);
 
-    public Rect theFirstOne = new Rect(150, 370, 40, 40);
-    public Rect theSecondOne = new Rect(450, 375, 40, 40);
+    public Rect theFirstOne = new Rect(10, 370, 40, 40);
+    public Rect theSecondOne = new Rect(330, 375, 40, 40);
     public Rect theThirdOne = new Rect(600, 200, 40, 40);
 
     public Mat redFirst = new Mat();
     public Mat redSecond = new Mat();
     public Mat redThird = new Mat();
 
-    boolean tuning = false;
+    boolean tuning = true;
     public Mat hsv = new Mat();
     public Mat threshold = new Mat();
 
     public ArrayList<MatOfPoint> contours = new ArrayList<>();
 
-    public double duckPosition = 1;
+    public double duckPosition = 3;
 
     @Override
     public void init(int width, int height, CameraCalibration calibration) {
@@ -61,13 +61,13 @@ public class ducProcessorBlueLeft implements VisionProcessor {
         Imgproc.rectangle(frame, theSecondOne, new Scalar(100,0,222));
         Imgproc.rectangle(frame, theThirdOne, new Scalar(100,0,222));
 
-            duckPosition = 1;
+        duckPosition = 1;
 
-            //AREA 1
-            detectContours(redFirst, theFirstOne, contours, frame, 1);
+        //AREA 1
+        detectContours(redFirst, theFirstOne, contours, frame, 1);
 
-            //AREA 2
-            detectContours(redSecond, theSecondOne, contours, frame, 2);
+        //AREA 2
+        detectContours(redSecond, theSecondOne, contours, frame, 2);
 
         return frame;
     }
@@ -113,7 +113,7 @@ public class ducProcessorBlueLeft implements VisionProcessor {
 
         Imgproc.putText(frame, Integer.toString(contours.size()), new Point(rectangle.x, 400), Imgproc.FONT_HERSHEY_COMPLEX, 1, new Scalar(255,255,255));
         if (contours.size() > 1) {
-            duckPosition = number + 1;
+            duckPosition = number;
         }
         contours.clear();
 
