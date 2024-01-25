@@ -1,26 +1,18 @@
 package org.firstinspires.ftc.teamcode.Teleop;
 
-import android.util.Size;
-
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.util.InterpLUT;
+import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 /*
 10430 TELEOP
@@ -28,8 +20,7 @@ Motor gamepad controls
 */
 @TeleOp
 @Config
-@Disabled
-public class TeleopMK2 extends LinearOpMode {
+public class TeleopMK3 extends LinearOpMode {
 
     private DcMotor frontLeft;
     private DcMotor frontRight;
@@ -45,10 +36,20 @@ public class TeleopMK2 extends LinearOpMode {
     Servo servoLauncher;
     Servo servoPooper;
 
+    InterpLUT frontRightLUT;
+    InterpLUT frontLeftLUT;
+    InterpLUT backRightLUT;
+    InterpLUT backLeftLUT;
+
     double tgtPowerForward = 0;
     double tgtPowerStrafe = 0;
     double tgtPowerTurn = 0;
     double tgtPowerArm;
+
+    double initYaw;
+    double adjustedYaw;
+    public static double negative = -1;
+    public static double negative2 = -1;
 
     public static double kStrafing = 1;
 
@@ -61,10 +62,13 @@ public class TeleopMK2 extends LinearOpMode {
     boolean wristPos = true; //ignore the fact that it's inverted
 
     boolean canMove = true;
+    boolean fieldCentricStrafing = true;
 
     InterpLUT armAngles;
     double kCos = 0.12;
     double downPower = 0;
+
+    int soundID = hardwareMap.appContext.getResources().getIdentifier("Quack.wav", "raw", hardwareMap.appContext.getPackageName());
 
     @Override
     public void runOpMode() {
@@ -86,6 +90,8 @@ public class TeleopMK2 extends LinearOpMode {
         armAngles.add(10000, 181); //safety 2
         armAngles.createLUT();
 
+        initializeYaw();
+
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -99,25 +105,12 @@ public class TeleopMK2 extends LinearOpMode {
         servoLauncher.setPosition(0.2);
         servoPooper.setPosition(0.5);
 
+        SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundID);
         waitForStart();
 
         while (opModeIsActive()) {
 
             //gamepad 1
-
-            if (gamepad1.right_bumper && gamepad1.left_bumper) {
-                servoLauncher.setPosition(0);
-            }
-
-            /*this cuts the target power in half if you're
-            holding down the b button on the controller*/
-            if (this.gamepad1.right_trigger > 0) {
-                //slow
-                division = 4;
-            } else {
-                //normal
-                division = 2;
-            }
 
 
             //gamepad 2
@@ -129,6 +122,33 @@ public class TeleopMK2 extends LinearOpMode {
                 } else {
                     servoClaw.setPosition(0.5);
                     openClaw = true;
+                }
+            }
+
+            if (gamepad1.left_trigger > 0) {
+                if (gamepad1.y) {
+                    initializeYaw();
+                }
+
+                if (gamepad1.a) {
+                    while (gamepad1.a) {}
+                    if (fieldCentricStrafing) {
+                        fieldCentricStrafing = false;
+                    } else {
+                        fieldCentricStrafing = true;
+                    }
+                }
+            } else {
+                if (gamepad1.right_bumper && gamepad1.left_bumper) {
+                    servoLauncher.setPosition(0);
+                }
+
+                if (gamepad1.right_trigger > 0) {
+                    //slow
+                    division = 4;
+                } else {
+                    //normal
+                    division = 2;
                 }
             }
 
@@ -150,46 +170,75 @@ public class TeleopMK2 extends LinearOpMode {
                 downPower = 0;
             }
 
-            tgtPowerForward = (-this.gamepad1.left_stick_y / division);
-            tgtPowerStrafe = (-this.gamepad1.left_stick_x / division);
-            tgtPowerTurn = (this.gamepad1.right_stick_x / division);
+            tgtPowerForward = (this.gamepad1.left_stick_y / division); //y
+            tgtPowerStrafe = (-this.gamepad1.left_stick_x / division); //x
+            tgtPowerTurn = (-this.gamepad1.right_stick_x / division); //turning
             tgtPowerArm = ((this.gamepad2.right_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
+
+            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+
+            adjustedYaw = orientation.getYaw(AngleUnit.DEGREES)-initYaw;
+            double zeroedYaw = -initYaw+orientation.getYaw(AngleUnit.DEGREES);
+
+            double theta = Math.atan2(tgtPowerForward, tgtPowerStrafe) * 180/Math.PI;
+            double realTheta;
+            realTheta = (360 - zeroedYaw) + theta;
+            double power = Math.hypot(tgtPowerForward, tgtPowerStrafe);
+
+            double sin = Math.sin((realTheta * (Math.PI/180)) - (Math.PI / 4));
+            double cos = Math.cos((realTheta * (Math.PI/180)) - (Math.PI / 4));
+            double maxSinCos = Math.max(Math.abs(sin), Math.abs(cos));
 
             //sets motor powereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeew44444444444444    q1`1`
             //this comment corrupted but its just too funny to delete
+            double[] motorPower;
+            if (fieldCentricStrafing) {
+                motorPower = new double[]{
+                        (power * cos / maxSinCos + tgtPowerTurn), //front left
+                        (power * sin / maxSinCos + tgtPowerTurn), //back left
+                        -(power * sin / maxSinCos - tgtPowerTurn), //front right
+                        -(power * cos / maxSinCos - tgtPowerTurn) //back right
+                };
+            } else {
+                motorPower = new double[]{
+                        tgtPowerForward + (tgtPowerStrafe * kStrafing) + tgtPowerTurn, //front left
+                        -tgtPowerForward + tgtPowerStrafe + tgtPowerTurn, //back left
+                        tgtPowerForward - (tgtPowerStrafe * kStrafing) + tgtPowerTurn, //front right
+                        -tgtPowerForward - tgtPowerStrafe + tgtPowerTurn //back right
+                };
+            }
+            if (motorPower.length == 0) {
+                motorPower = new double[]{
+                    0, 0, 0, 0
+                };
+                telemetry.addLine("HELP BAD THINGS ARE HAPPENING BAD CODING IM BAD AT CODING");
+            }
+            if ((power + Math.abs(tgtPowerTurn)) > 1)
+                for (int i = 0; i < 4; i++) {
+                    if (i < 1) {
+                        motorPower[i] /= power + tgtPowerTurn;
+                    } else {
+                        motorPower[i] /= power - tgtPowerTurn;
+                    }
+                }
             if (canMove) {
-                setPowerAll(
-                        -tgtPowerForward + (tgtPowerStrafe * kStrafing) - tgtPowerTurn,
-                        tgtPowerForward + tgtPowerStrafe - tgtPowerTurn,
-                        -tgtPowerForward - (tgtPowerStrafe * kStrafing) - tgtPowerTurn,
-                        tgtPowerForward - tgtPowerStrafe - tgtPowerTurn
-                );
+                setPowerAll(motorPower);
             }
             armMotor.setPower(tgtPowerArm);
             armMotor2.setPower(-tgtPowerArm);
 
-            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-            AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
-
             telemetry.addData("Yaw", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
-            telemetry.addData("current wrist amount", servoWrist.getPosition());
-            telemetry.addData("right stick y", this.gamepad1.right_stick_y);
-
-            telemetry.addData("current arm position", armMotor.getCurrentPosition());
-            telemetry.addData("arm angle", armAngles.get(armMotor.getCurrentPosition()));
-            telemetry.addData("gravity compensation", calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos));
-            telemetry.addData("current tgt arm", tgtPowerArm);
-            telemetry.addData("current arm motor power", armMotor.getPower());
+            telemetry.addData("field centric multiplier frontright", 1);
             telemetry.update();
         }
     }
 
 
-    private void setPowerAll(double fl, double fr, double bl, double br) {
-        frontLeft.setPower(fl);
-        backLeft.setPower(bl);
-        frontRight.setPower(fr);
-        backRight.setPower(br);
+    private void setPowerAll(double[] motorPowers) {
+        frontLeft.setPower(motorPowers[0]);
+        backLeft.setPower(motorPowers[1]);
+        frontRight.setPower(motorPowers[2]);
+        backRight.setPower(motorPowers[3]);
     }
 
     private void initializeMotors() {
@@ -216,6 +265,15 @@ public class TeleopMK2 extends LinearOpMode {
 
     private double calculateArmPower(double armAngle, double kCos) {
         return kCos * Math.cos(Math.toRadians(armAngle));
+    }
+
+    public void initializeYaw() {
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        initYaw = orientation.getYaw(AngleUnit.DEGREES);
+    }
+
+    public double getFieldCentric(double theta, InterpLUT lut) {
+        return lut.get(theta);
     }
 
 }

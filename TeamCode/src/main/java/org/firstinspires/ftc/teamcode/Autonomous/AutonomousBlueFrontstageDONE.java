@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.lib.AutoLib;
 import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueFrontstage;
 import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueFrontstage;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -129,7 +130,7 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
         List<double[]> parsedLines = readAndParseDoublesFromFile();
 
         while (isStarted() && !isStopRequested()) {
-            tgtArmPower = calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
+            tgtArmPower = AutoLib.calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
             armMotor.setPower(tgtArmPower);
             armMotor2.setPower(-tgtArmPower);
 
@@ -199,7 +200,7 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        Drive(speed, myLine);
+        Drive(speed, myLine, 0.3);
 
         while (frontRight.isBusy() || frontLeft.isBusy() || backLeft.isBusy() || backRight.isBusy()) {}
 
@@ -270,7 +271,7 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
 
     }
 
-    private void Drive(double power, double[] targetPositions) {
+    private void Drive(double power, double[] targetPositions, double kp) {
 
         double highestPositionIndex = findHighest(targetPositions);
         double highestPosition = targetPositions[(int)highestPositionIndex];
@@ -279,15 +280,11 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
 
         for (int i = 0; i<4; i++) {
             if (targetPositions[i] > 0) {
-                motors[i].setPower(power*(powerPercentagesArray[i]/100));
+                motors[i].setPower(power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
             } else {
-                motors[i].setPower(-power*(powerPercentagesArray[i]/100));
+                motors[i].setPower(-power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
             }
         }
-    }
-
-    private double calculateArmPower(double armAngle, double kCos, double kp, double target) {
-        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle));
     }
 
     private static List<double[]> readAndParseDoublesFromFile() {

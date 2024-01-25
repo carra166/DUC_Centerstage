@@ -21,7 +21,7 @@ public class ducProcessorRedBackstage implements VisionProcessor {
     public Scalar redUpper = new Scalar(201.2, 255, 247.9);
 
     public Rect theFirstOne = new Rect(120, 370, 40, 40);
-    public Rect theSecondOne = new Rect(410, 380, 40, 40);
+    public Rect theSecondOne = new Rect(430, 380, 40, 40);
     public Rect theThirdOne = new Rect(600, 200, 40, 40);
 
     public Mat redFirst = new Mat();
@@ -112,7 +112,7 @@ public class ducProcessorRedBackstage implements VisionProcessor {
         }
 
         Imgproc.putText(frame, Integer.toString(contours.size()), new Point(rectangle.x, 400), Imgproc.FONT_HERSHEY_COMPLEX, 1, new Scalar(255,255,255));
-        if (contours.size() > 1) {
+        if (contours.size() > 0) {
             duckPosition = number + 1;
         }
         contours.clear();

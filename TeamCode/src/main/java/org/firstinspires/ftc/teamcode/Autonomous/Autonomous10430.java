@@ -39,7 +39,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
     private static final String BASE_FOLDER_NAME = "autonomousTexts";
     public static final String AUTONOMOUS_DIRECTORY = "";
     static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY;
-    public static String textFileName = "center";
+    public static String textFileName = "test";
     public static double speed = 0.3;
 
     private DcMotor frontLeft;
@@ -78,7 +78,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         armAngles.add(0, -40); //init position
         armAngles.add(100, 0); //straight out (forward)
         armAngles.add(400, 90); //straight up
-        armAngles.add(666, 180); //straight back
+        armAngles.add(666, 180); //straight back SCARY!!!!!!!!!!!!!!!!!!!!!!!!!!
         armAngles.add(1000, 181); //safety 2
         armAngles.createLUT();
 
@@ -131,8 +131,6 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
             telemetry.addData("hello", step);
             telemetry.update();
         }
-
-
 
         for (double[] line : parsedLines) {
             runToParsedPosition(line, 0.1);
@@ -192,7 +190,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        Drive(speed, myLine);
+        Drive(speed, myLine, 0.3);
 
         while (frontRight.isBusy() || frontLeft.isBusy() || backLeft.isBusy() || backRight.isBusy()) {}
 
@@ -263,7 +261,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
 
     }
 
-    private void Drive(double power, double[] targetPositions) {
+    private void Drive(double power, double[] targetPositions, double kp) {
 
         double highestPositionIndex = findHighest(targetPositions);
         double highestPosition = targetPositions[(int)highestPositionIndex];
@@ -272,9 +270,9 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
 
         for (int i = 0; i<4; i++) {
             if (targetPositions[i] > 0) {
-                motors[i].setPower(power*(powerPercentagesArray[i]/100));
+                motors[i].setPower(power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
             } else {
-                motors[i].setPower(-power*(powerPercentagesArray[i]/100));
+                motors[i].setPower(-power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
             }
         }
     }

@@ -161,6 +161,7 @@ public class AutoDriving extends LinearOpMode {
             //pooper function call
             if (gamepad1.y) {
                 while (gamepad1.y) {}
+                servoPooper.setPosition(0.5);
                 try {
                     FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt", true);
                     writer.write("pooper\n");

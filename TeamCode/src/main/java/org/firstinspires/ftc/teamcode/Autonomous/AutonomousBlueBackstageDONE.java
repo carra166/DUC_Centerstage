@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.lib.AutoLib;
 import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueBackstage;
 import org.firstinspires.ftc.vision.VisionPortal;
 
@@ -30,28 +31,28 @@ Uses encoders
 */
 @Autonomous
 @Config
-public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOpMode {
+public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
 
     int step = 0;
     boolean runOnce = true;
 
-    public static final String PARK_POSITION = "left"; //LOWERCASE ONLY
+    public static final String PARK_POSITION = "right"; //LOWERCASE ONLY
     private static final String BASE_FOLDER_NAME = "autonomousTexts";
-    public static final String AUTONOMOUS_DIRECTORY = "blueBackstage";
+    public static final String AUTONOMOUS_DIRECTORY = "backstageBlue";
     static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY;
     public static String textFileName = "center";
     public static double speed = 0.3;
 
-    private DcMotor frontLeft;
-    private DcMotor frontRight;
-    private DcMotor backLeft;
-    private DcMotor backRight;
-    private DcMotor armMotor;
-    private DcMotor armMotor2;
-    Servo servoClaw;
-    Servo servoWrist;
-    Servo servoLauncher;
-    Servo servoPooper;
+    public static DcMotor frontLeft;
+    public static DcMotor frontRight;
+    public static DcMotor backLeft;
+    public static DcMotor backRight;
+    public static DcMotor armMotor;
+    public static DcMotor armMotor2;
+    public static Servo servoClaw;
+    public static Servo servoWrist;
+    public static Servo servoLauncher;
+    public static Servo servoPooper;
 
     private IMU imu;
     private YawPitchRollAngles robotOrientation;
@@ -110,13 +111,13 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
             telemetry.addData("DUCK POSITION", duckPosition);
             switch((int)duckPosition) {
                 case 1:
-                    textFileName = "left";
+                    textFileName = "right";
                 break;
                 case 2:
-                    textFileName = "center";
+                    textFileName = "left";
                 break;
                 case 3:
-                    textFileName = "right";
+                    textFileName = "center";
                 break;
             }
             telemetry.addData("TARGET POSITION", textFileName);
@@ -128,7 +129,7 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
         List<double[]> parsedLines = readAndParseDoublesFromFile();
 
         while (isStarted() && !isStopRequested()) {
-            tgtArmPower = calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
+            tgtArmPower = AutoLib.calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
             armMotor.setPower(tgtArmPower);
             armMotor2.setPower(-tgtArmPower);
 
@@ -244,7 +245,15 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
                         runOnce = true;
                     }
                     break;
-
+                case 17:
+                    if (runOnce) {
+                        runToParsedPosition(parsedLines.get(parsedLines.size() - 1), 0.1);
+                        runOnce = false;
+                    }
+                    if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
+                        step++;
+                        runOnce = true;
+                    }
             }
             telemetry.addData("step:", step);
             telemetry.update();
@@ -262,7 +271,7 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
     }
 
     private void caseStatement(List<double[]> parsedLines) {
-        if (parsedLines.size() < step + 1) {
+        if (parsedLines.size() < step + 2) {
 
             DcMotor[] motors = new DcMotor[]{ frontRight, frontLeft, backRight, backLeft };
             for (int i = 0; i<4; i++) {
@@ -307,7 +316,7 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        Drive(speed, myLine);
+        Drive(speed, myLine, 0.3);
 
         while (frontRight.isBusy() || frontLeft.isBusy() || backLeft.isBusy() || backRight.isBusy()) {}
 
@@ -391,7 +400,7 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        Drive(power, new double[]{ frontRight.getTargetPosition(), frontLeft.getTargetPosition(), backRight.getTargetPosition(), backLeft.getTargetPosition() });
+        //Drive(power, new double[]{ frontRight.getTargetPosition(), frontLeft.getTargetPosition(), backRight.getTargetPosition(), backLeft.getTargetPosition() });
 
         while (frontRight.isBusy() && frontLeft.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
             //telemetry.addData("Type of movement", type);
@@ -406,7 +415,7 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
 
     }
 
-    private void Drive(double power, double[] targetPositions) {
+    private void Drive(double power, double[] targetPositions, double kp) {
 
         double highestPositionIndex = findHighest(targetPositions);
         double highestPosition = targetPositions[(int)highestPositionIndex];
@@ -415,15 +424,11 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
 
         for (int i = 0; i<4; i++) {
             if (targetPositions[i] > 0) {
-                motors[i].setPower(power*(powerPercentagesArray[i]/100));
+                motors[i].setPower(power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
             } else {
-                motors[i].setPower(-power*(powerPercentagesArray[i]/100));
+                motors[i].setPower(-power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
             }
         }
-    }
-
-    private double calculateArmPower(double armAngle, double kCos, double kp, double target) {
-        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle));
     }
 
     private static List<double[]> readAndParseDoublesFromFile() {
@@ -450,6 +455,11 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
                 parsedLines.add(parsedNumbers);
             }
 
+            if (stringCompare("left", PARK_POSITION) == 0) {
+                parsedLines.add(new double[]{ -844.0, -1004.0, 966.0, 845.0 });
+            } else if (stringCompare("right", PARK_POSITION) == 0) {
+                parsedLines.add(new double[]{ 844.0, 1004.0, -966.0, -845.0 });
+            }
             bufferedReader.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -472,7 +482,6 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
 
     public static int stringCompare(String str1, String str2)
     {
-
         int l1 = str1.length();
         int l2 = str2.length();
         int lmin = Math.min(l1, l2);
@@ -485,15 +494,9 @@ public class AutonomousBlueBackstageUNFINISHED<myIMUparameters> extends LinearOp
                 return str1_ch - str2_ch;
             }
         }
-
-        // Edge case for strings like
-        // String 1="Geeks" and String 2="Geeksforgeeks"
         if (l1 != l2) {
             return l1 - l2;
         }
-
-        // If none of the above conditions is true,
-        // it implies both the strings are equal
         else {
             return 0;
         }

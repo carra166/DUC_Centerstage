@@ -28,7 +28,7 @@ public class ducProcessorRedFrontstage implements VisionProcessor {
     public Mat redSecond = new Mat();
     public Mat redThird = new Mat();
 
-    boolean tuning = true;
+    boolean tuning = false;
     public Mat hsv = new Mat();
     public Mat threshold = new Mat();
 
@@ -112,7 +112,7 @@ public class ducProcessorRedFrontstage implements VisionProcessor {
         }
 
         Imgproc.putText(frame, Integer.toString(contours.size()), new Point(rectangle.x, 400), Imgproc.FONT_HERSHEY_COMPLEX, 1, new Scalar(255,255,255));
-        if (contours.size() > 1) {
+        if (contours.size() > 0) {
             duckPosition = number;
         }
         contours.clear();

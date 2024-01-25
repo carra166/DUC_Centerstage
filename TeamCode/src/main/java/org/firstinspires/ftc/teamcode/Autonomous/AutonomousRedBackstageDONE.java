@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.lib.AutoLib;
 import org.firstinspires.ftc.teamcode.processors.ducProcessorRedBackstage;
 import org.firstinspires.ftc.vision.VisionPortal;
 
@@ -30,7 +31,7 @@ Uses encoders
 */
 @Autonomous
 @Config
-public class AutoRedBackstageDONE<myIMUparameters> extends LinearOpMode {
+public class AutonomousRedBackstageDONE<myIMUparameters> extends LinearOpMode {
 
     int step = 0;
     boolean runOnce = true;
@@ -40,7 +41,7 @@ public class AutoRedBackstageDONE<myIMUparameters> extends LinearOpMode {
     public static final String AUTONOMOUS_DIRECTORY = "backstageRed";
     static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY;
     public static String textFileName = "center";
-    public static double speed = 0.5;
+    public static double speed = 0.3;
 
     private DcMotor frontLeft;
     private DcMotor frontRight;
@@ -128,7 +129,7 @@ public class AutoRedBackstageDONE<myIMUparameters> extends LinearOpMode {
         List<double[]> parsedLines = readAndParseDoublesFromFile();
 
         while (isStarted() && !isStopRequested()) {
-            tgtArmPower = calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
+            tgtArmPower = AutoLib.calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
             armMotor.setPower(tgtArmPower);
             armMotor2.setPower(-tgtArmPower);
 
@@ -315,7 +316,7 @@ public class AutoRedBackstageDONE<myIMUparameters> extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        Drive(speed, myLine);
+        Drive(speed, myLine, 0.3);
 
         while (frontRight.isBusy() || frontLeft.isBusy() || backLeft.isBusy() || backRight.isBusy()) {}
 
@@ -335,6 +336,11 @@ public class AutoRedBackstageDONE<myIMUparameters> extends LinearOpMode {
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -398,7 +404,7 @@ public class AutoRedBackstageDONE<myIMUparameters> extends LinearOpMode {
         backRight.setPower(power);
     }
 
-    private void Drive(double power, double[] targetPositions) {
+    private void Drive(double power, double[] targetPositions, double kp) {
 
         double highestPositionIndex = findHighest(targetPositions);
         double highestPosition = targetPositions[(int)highestPositionIndex];
@@ -407,15 +413,11 @@ public class AutoRedBackstageDONE<myIMUparameters> extends LinearOpMode {
 
         for (int i = 0; i<4; i++) {
             if (targetPositions[i] > 0) {
-                motors[i].setPower(power*(powerPercentagesArray[i]/100));
+                motors[i].setPower(power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
             } else {
-                motors[i].setPower(-power*(powerPercentagesArray[i]/100));
+                motors[i].setPower(-power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
             }
         }
-    }
-
-    private double calculateArmPower(double armAngle, double kCos, double kp, double target) {
-        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle));
     }
 
     private static List<double[]> readAndParseDoublesFromFile() {
