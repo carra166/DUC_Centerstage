@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Teleop;
 
+import android.media.SoundPool;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.ftccommon.SoundPlayer;
@@ -11,7 +13,6 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 /*
@@ -31,7 +32,8 @@ public class TeleopMK3 extends LinearOpMode {
     IMU imu;
     YawPitchRollAngles robotOrientation;
 
-    Servo servoClaw;
+    Servo servoClawLeft;
+    Servo servoClawRight;
     Servo servoWrist;
     Servo servoLauncher;
     Servo servoPooper;
@@ -48,8 +50,8 @@ public class TeleopMK3 extends LinearOpMode {
 
     double initYaw;
     double adjustedYaw;
-    public static double negative = -1;
-    public static double negative2 = -1;
+    public static double servoOpen = 0.1;
+    public static double servoClosed = 0.3;
 
     public static double kStrafing = 1;
 
@@ -58,20 +60,23 @@ public class TeleopMK3 extends LinearOpMode {
     boolean inputOn = false;
     boolean canInputOn = true;
 
-    boolean openClaw = true; //ignore the fact that it's inverted
+    boolean leftClawOpen = true; //ignore the fact that it's inverted
+    boolean rightClawOpen = true;
     boolean wristPos = true; //ignore the fact that it's inverted
+    double wristAngle = 0.2;
 
     boolean canMove = true;
     boolean fieldCentricStrafing = true;
 
     InterpLUT armAngles;
-    double kCos = 0.12;
+    InterpLUT wristAngles;
+    double kCos = 0.13;
     double downPower = 0;
-
-    int soundID = hardwareMap.appContext.getResources().getIdentifier("Quack.wav", "raw", hardwareMap.appContext.getPackageName());
 
     @Override
     public void runOpMode() {
+
+        int[] soundIDs = new int[]{ getSoundId("quack"), getSoundId("superquack"), getSoundId("song") };
 
         //initialized motors
         initializeMotors();
@@ -90,6 +95,15 @@ public class TeleopMK3 extends LinearOpMode {
         armAngles.add(10000, 181); //safety 2
         armAngles.createLUT();
 
+        wristAngles = new InterpLUT();
+        wristAngles.add(-10000, 0.21);
+        wristAngles.add(125, 0.2);
+        wristAngles.add(180, 0.35);
+        wristAngles.add(10000, 0.34);
+        wristAngles.createLUT();
+
+
+
         initializeYaw();
 
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -100,29 +114,62 @@ public class TeleopMK3 extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        servoWrist.setPosition(0.1);
-        servoClaw.setPosition(0.5);
+        servoWrist.setPosition(0);
+        servoClawLeft.setPosition(0.35);
+        servoClawRight.setPosition(0.6);
         servoLauncher.setPosition(0.2);
         servoPooper.setPosition(0.5);
 
-        SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundID);
+        SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundIDs[0]);
         waitForStart();
 
         while (opModeIsActive()) {
 
-            //gamepad 1
-
-
             //gamepad 2
             if (gamepad2.a) {
                 while (gamepad2.a) {}
-                if (openClaw) {
-                    servoClaw.setPosition(0.675);
-                    openClaw = false;
+                    //OPEN
+                    servoClawLeft.setPosition(0.18);
+                    servoClawRight.setPosition(0.8);
+                    leftClawOpen = false;
+                    rightClawOpen = false;
+            }
+
+            if (gamepad2.y) {
+                while (gamepad2.y) {}
+                //CLOSE
+                servoClawLeft.setPosition(0.35);
+                servoClawRight.setPosition(0.6);
+                leftClawOpen = true;
+                rightClawOpen = true;
+            }
+
+            if (gamepad2.right_bumper) {
+                while (gamepad2.right_bumper) {}
+                if (rightClawOpen) {
+                    servoClawRight.setPosition(0.8);
+                    rightClawOpen = false;
                 } else {
-                    servoClaw.setPosition(0.5);
-                    openClaw = true;
+                    servoClawRight.setPosition(0.6);
+                    rightClawOpen = true;
                 }
+                telemetry.addData("right claw", rightClawOpen);
+            }
+
+            if (gamepad2.left_bumper) {
+                while (gamepad2.left_bumper) {}
+                if (leftClawOpen) {
+                    servoClawLeft.setPosition(0.18);
+                    leftClawOpen = false;
+                } else {
+                    servoClawLeft.setPosition(0.35);
+                    leftClawOpen = true;
+                }
+                telemetry.addData("left claw", leftClawOpen);
+            }
+
+            if (gamepad2.dpad_up) {
+                servoWrist.setPosition(wristAngle);
             }
 
             if (gamepad1.left_trigger > 0) {
@@ -156,13 +203,12 @@ public class TeleopMK3 extends LinearOpMode {
             if (gamepad2.x) {
                 while (gamepad2.x) {}
                 if (wristPos) {
-                    servoWrist.setPosition(0.3); //arm up position
                     wristPos = false;
                 } else {
-                    servoWrist.setPosition(0.9); //arm down position
+                    servoWrist.setPosition(0.743); //arm down position
                     wristPos = true;
                 }
-            }
+            } //0.4 for auto btw
 
             if (gamepad2.y) {
                 downPower = -1;
@@ -170,10 +216,21 @@ public class TeleopMK3 extends LinearOpMode {
                 downPower = 0;
             }
 
+            if (gamepad1.dpad_left) {
+                while (gamepad1.dpad_left) {}
+                SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundIDs[0]);
+            } else if (gamepad1.dpad_up) {
+                while (gamepad1.dpad_up) {}
+                SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundIDs[1]);
+            } else if (gamepad1.dpad_down) {
+                while (gamepad1.dpad_down) {}
+                SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundIDs[2]);
+            }
+
             tgtPowerForward = (this.gamepad1.left_stick_y / division); //y
             tgtPowerStrafe = (-this.gamepad1.left_stick_x / division); //x
             tgtPowerTurn = (-this.gamepad1.right_stick_x / division); //turning
-            tgtPowerArm = ((this.gamepad2.right_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
+            tgtPowerArm = ((this.gamepad2.right_stick_y / -3) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
 
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
 
@@ -211,7 +268,6 @@ public class TeleopMK3 extends LinearOpMode {
                 motorPower = new double[]{
                     0, 0, 0, 0
                 };
-                telemetry.addLine("HELP BAD THINGS ARE HAPPENING BAD CODING IM BAD AT CODING");
             }
             if ((power + Math.abs(tgtPowerTurn)) > 1)
                 for (int i = 0; i < 4; i++) {
@@ -226,9 +282,12 @@ public class TeleopMK3 extends LinearOpMode {
             }
             armMotor.setPower(tgtPowerArm);
             armMotor2.setPower(-tgtPowerArm);
+            if (!wristPos) {
+                wristAngle = wristAngles.get(armAngles.get(armMotor.getCurrentPosition()));
+                servoWrist.setPosition(wristAngle); //arm up position (this is funny) (laugh)
+            }
 
-            telemetry.addData("Yaw", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
-            telemetry.addData("field centric multiplier frontright", 1);
+            telemetry.addData("wrist position", wristAngle);
             telemetry.update();
         }
     }
@@ -256,7 +315,8 @@ public class TeleopMK3 extends LinearOpMode {
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        servoClaw = hardwareMap.get(Servo.class, "claw");
+        servoClawLeft = hardwareMap.get(Servo.class, "clawLeft");
+        servoClawRight = hardwareMap.get(Servo.class, "clawRight");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
         servoLauncher = hardwareMap.get(Servo.class, "launcher");
         servoPooper = hardwareMap.get(Servo.class, "pooper");
@@ -272,8 +332,8 @@ public class TeleopMK3 extends LinearOpMode {
         initYaw = orientation.getYaw(AngleUnit.DEGREES);
     }
 
-    public double getFieldCentric(double theta, InterpLUT lut) {
-        return lut.get(theta);
+    public int getSoundId(String soundName) {
+        return hardwareMap.appContext.getResources().getIdentifier(soundName, "raw", hardwareMap.appContext.getPackageName());
     }
 
 }

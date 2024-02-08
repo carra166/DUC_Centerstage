@@ -40,7 +40,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
     public static final String AUTONOMOUS_DIRECTORY = "";
     static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY;
     public static String textFileName = "test";
-    public static double speed = 0.3;
+    public static double speed = 0.5;
 
     private DcMotor frontLeft;
     private DcMotor frontRight;
@@ -59,10 +59,13 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
     private double duckPosition;
 
     InterpLUT armAngles;
-    double kCos = 0;
+    InterpLUT wristAngles;
+    double kCos = 0.13;
     double tgtArmPower = 0;
     double armPosition = -20;
     double countdown = 100;
+
+    boolean wristPos = true;
 
     double kp = 0.003;
     String highestPosition = "";
@@ -81,6 +84,8 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         armAngles.add(666, 180); //straight back SCARY!!!!!!!!!!!!!!!!!!!!!!!!!!
         armAngles.add(1000, 181); //safety 2
         armAngles.createLUT();
+
+
 
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD, RevHubOrientationOnRobot.UsbFacingDirection.UP)));
         robotOrientation = imu.getRobotYawPitchRollAngles();
@@ -101,7 +106,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
                 .build();
 
         while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {}
-        servoWrist.setPosition(0.1);
+        servoWrist.setPosition(0);
         servoClaw.setPosition(0.5);
         servoLauncher.setPosition(0);
         servoPooper.setPosition(0.5);
@@ -123,12 +128,104 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
 
             switch (step) {
                 case 100:
+                    if (runOnce) {
+                        servoWrist.setPosition(1);
+                        runOnce = false;
+                    }
+                    if (servoWrist.getPosition() == 1) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 101:
+                    if (runOnce) {
+                        armPosition = 170;
+                        runOnce = false;
+                    }
+                    if (armAngles.get(armMotor.getCurrentPosition()) > 169) {
+                        countdown--;
+                        if (countdown<1) {
+                            step++;
+                            runOnce = true;
+                        }
+                    }
+                    break;
+                case 102:
+                    if (runOnce) {
+                        countdown = 50;
+                        servoClaw.setPosition(0.18);
+                        runOnce = false;
+                    }
+                    if (servoClaw.getPosition() == 0.18) {
+                        countdown--;
+                        if (countdown<1) {
+                            step++;
+                            runOnce = true;
+                        }
+                    }
+                    break;
+                case 103:
+                    if (runOnce) {
+                        servoWrist.setPosition(0);
+                        runOnce = false;
+                    }
+                    if (servoWrist.getPosition() == 0) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 104:
+                    if (runOnce) {
+                        countdown = 50;
+                        servoClaw.setPosition(0.35);
+                        runOnce = false;
+                    }
+                    if (servoClaw.getPosition() == 0.35) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 105:
+                    if (runOnce) {
+                        armPosition = 30;
+                        runOnce = false;
+                    }
+                    if (armAngles.get(armMotor.getCurrentPosition()) < 31) {
+                        countdown--;
+                        if (countdown<1) {
+                            step++;
+                            runOnce = true;
+                        }
+                    }
+                    break;
+                case 106:
+                    if (runOnce) {
+                        armPosition = -10;
+                        runOnce = false;
+                    }
+                    if (armAngles.get(armMotor.getCurrentPosition()) < -9) {
+                        step++;
+                        runOnce = true;
+                    }
+                    break;
+                case 107:
+                    /*if (runOnce) {
+                        runToParsedPosition(parsedLines.get(parsedLines.size() - 1), 0.1);
+                        runOnce = false;
+                    }
+                    if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
+                        step++;
+                        runOnce = true;
+                    }*/
+                break;
+                case 108:
                     break;
                 default:
                     caseStatement(parsedLines);
                 break;
             }
-            telemetry.addData("hello", step);
+            telemetry.addData("Step:", step);
+            telemetry.addData("Arm angle:", armAngles.get(armMotor.getCurrentPosition()));
             telemetry.update();
         }
 
@@ -172,6 +269,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
             return;
         }
         if (myLine[0] == 6969) {
+            step = 100;
             return;
         }
 
@@ -216,7 +314,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        servoClaw = hardwareMap.get(Servo.class, "claw");
+        servoClaw = hardwareMap.get(Servo.class, "clawLeft");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
         servoLauncher = hardwareMap.get(Servo.class, "launcher");
         servoPooper = hardwareMap.get(Servo.class, "pooper");
@@ -249,7 +347,8 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
         //Drive(power);
 
         while (frontRight.isBusy() && frontLeft.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
-            //telemetry.addData("Type of movement", type);
+            telemetry.addData("Distance left:", frontRight.getTargetPosition()-frontRight.getCurrentPosition());
+            telemetry.update();
         }
 
         //sets power to zero, therefore braking
@@ -270,9 +369,9 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
 
         for (int i = 0; i<4; i++) {
             if (targetPositions[i] > 0) {
-                motors[i].setPower(power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
+                motors[i].setPower(power*(powerPercentagesArray[i]/100) /*+ (kp * (targetPositions[i]-motors[i].getCurrentPosition()))*/);
             } else {
-                motors[i].setPower(-power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
+                motors[i].setPower(-power*(powerPercentagesArray[i]/100) /*+ (kp * (targetPositions[i]-motors[i].getCurrentPosition()))*/);
             }
         }
     }
