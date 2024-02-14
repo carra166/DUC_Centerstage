@@ -1,4 +1,3 @@
-@ -1,254 +0,0 @@
 package org.firstinspires.ftc.teamcode.Teleop;
 
 import java.io.BufferedReader;
@@ -67,6 +66,7 @@ public class AutoDriving extends LinearOpMode {
     double downPower = 0;
 
     String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME;
+    String lastSaved = "None saved yet!";
 
     @Override
     public void runOpMode() {
@@ -141,6 +141,8 @@ public class AutoDriving extends LinearOpMode {
                     backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+                    lastSaved = "New position saved!";
+
                 } catch (IOException e) {
                     System.out.println("An error occurred.");
                     e.printStackTrace();
@@ -154,6 +156,8 @@ public class AutoDriving extends LinearOpMode {
                     FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt"); // Appending mode
                     writer.write(""); // Appending a new line with the formatted string
                     writer.close();
+
+                    lastSaved = "File cleared";
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -167,6 +171,8 @@ public class AutoDriving extends LinearOpMode {
                     FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt", true);
                     writer.write("pooper\n");
                     writer.close();
+
+                    lastSaved = "Pixel pooper opened!";
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -179,13 +185,30 @@ public class AutoDriving extends LinearOpMode {
                     FileWriter writer = new FileWriter(directoryPath+"/"+textFileName+".txt", true);
                     writer.write("backboard\n");
                     writer.close();
+
+                    lastSaved = "Backboard loaded!";
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
 
-            tgtPowerForward = (-this.gamepad1.left_stick_y / division);
-            tgtPowerStrafe = (-this.gamepad1.left_stick_x / division);
+            if (this.gamepad1.dpad_up) {
+                tgtPowerForward = 0.5 / division;
+            } else if (this.gamepad1.dpad_down) {
+                tgtPowerForward = -0.5 / division;
+            } else {
+                tgtPowerForward = 0;
+            }
+
+            if (this.gamepad1.dpad_left) {
+                tgtPowerStrafe = 1 / division;
+            } else if (this.gamepad1.dpad_right) {
+                tgtPowerStrafe = -1 / division;
+            } else {
+                tgtPowerStrafe = 0;
+            }
+            //tgtPowerForward = (-((this.gamepad1.dpad_up ? true : 1) - (this.gamepad1.dpad_down ? true : 1)) / division);
+            //tgtPowerStrafe = (-((this.gamepad1.dpad_right ? true : 1) - (this.gamepad1.dpad_left ? true : 1)) / division);
             tgtPowerTurn = (this.gamepad1.right_stick_x / division);
             tgtPowerArm = ((this.gamepad2.left_stick_y / -5) + calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos) + downPower);
 
@@ -204,6 +227,7 @@ public class AutoDriving extends LinearOpMode {
             AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
 
             telemetry.addData("front right wheel encoder position", frontRight.getCurrentPosition());
+            telemetry.addLine(lastSaved);
             telemetry.update();
         }
     }
@@ -231,7 +255,7 @@ public class AutoDriving extends LinearOpMode {
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        servoClaw = hardwareMap.get(Servo.class, "claw");
+        servoClaw = hardwareMap.get(Servo.class, "clawLeft");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
         servoLauncher = hardwareMap.get(Servo.class, "launcher");
         servoPooper = hardwareMap.get(Servo.class, "pooper");

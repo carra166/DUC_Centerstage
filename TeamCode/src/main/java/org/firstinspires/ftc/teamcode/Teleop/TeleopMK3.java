@@ -29,6 +29,8 @@ public class TeleopMK3 extends LinearOpMode {
     private DcMotor backRight;
     private DcMotor armMotor;
     private DcMotor armMotor2;
+    private DcMotor climbMotor;
+    private DcMotor climbMotor2;
     IMU imu;
     YawPitchRollAngles robotOrientation;
 
@@ -46,7 +48,8 @@ public class TeleopMK3 extends LinearOpMode {
     double tgtPowerForward = 0;
     double tgtPowerStrafe = 0;
     double tgtPowerTurn = 0;
-    double tgtPowerArm;
+    double tgtPowerArm = 0;
+    double tgtPowerHang = 0;
 
     double initYaw;
     double adjustedYaw;
@@ -153,6 +156,7 @@ public class TeleopMK3 extends LinearOpMode {
                     servoClawRight.setPosition(0.6);
                     rightClawOpen = true;
                 }
+                //servoClawRight.setPosition(rightClawOpen ? 0.6 : 0.8);
                 telemetry.addData("right claw", rightClawOpen);
             }
 
@@ -187,15 +191,18 @@ public class TeleopMK3 extends LinearOpMode {
                 }
             } else {
                 if (gamepad1.right_bumper && gamepad1.left_bumper) {
-                    servoLauncher.setPosition(0);
+                    servoLauncher.setPosition(0.5);
                 }
 
                 if (gamepad1.right_trigger > 0) {
                     //slow
                     division = 4;
+                } else if (gamepad1.left_bumper) {
+                    //fast
+                    division = 0.9f;
                 } else {
                     //normal
-                    division = 2;
+                    division = 1;
                 }
             }
 
@@ -216,15 +223,17 @@ public class TeleopMK3 extends LinearOpMode {
                 downPower = 0;
             }
 
+            if (this.gamepad1.dpad_up) {
+                tgtPowerHang = 0.5 / division;
+            } else if (this.gamepad1.dpad_down) {
+                tgtPowerHang = -0.5 / division;
+            } else {
+                tgtPowerHang = 0;
+            }
+
             if (gamepad1.dpad_left) {
                 while (gamepad1.dpad_left) {}
                 SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundIDs[0]);
-            } else if (gamepad1.dpad_up) {
-                while (gamepad1.dpad_up) {}
-                SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundIDs[1]);
-            } else if (gamepad1.dpad_down) {
-                while (gamepad1.dpad_down) {}
-                SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundIDs[2]);
             }
 
             tgtPowerForward = (this.gamepad1.left_stick_y / division); //y
@@ -282,12 +291,17 @@ public class TeleopMK3 extends LinearOpMode {
             }
             armMotor.setPower(tgtPowerArm);
             armMotor2.setPower(-tgtPowerArm);
+            climbMotor.setPower(tgtPowerHang);
+            climbMotor2.setPower(-tgtPowerHang);
             if (!wristPos) {
                 wristAngle = wristAngles.get(armAngles.get(armMotor.getCurrentPosition()));
-                servoWrist.setPosition(wristAngle); //arm up position (this is funny) (laugh)
+                servoWrist.setPosition(wristAngle);
             }
 
-            telemetry.addData("wrist position", wristAngle);
+            telemetry.addData("Wrist position", wristAngle);
+            telemetry.addData("Arm encoder", armMotor.getCurrentPosition());
+            telemetry.addData("Arm angle", armAngles.get(armMotor.getCurrentPosition()));
+            telemetry.addData("Arm power", calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos));
             telemetry.update();
         }
     }
@@ -303,6 +317,8 @@ public class TeleopMK3 extends LinearOpMode {
     private void initializeMotors() {
         armMotor = hardwareMap.get(DcMotor.class, "ARM1");
         armMotor2 = hardwareMap.get(DcMotor.class, "ARM2");
+        climbMotor = hardwareMap.get(DcMotor.class, "CLIMBL");
+        climbMotor2 = hardwareMap.get(DcMotor.class, "CLIMBR");
         frontLeft = hardwareMap.get(DcMotor.class, "FL");
         frontRight = hardwareMap.get(DcMotor.class, "FR");
         backLeft = hardwareMap.get(DcMotor.class, "BL");
