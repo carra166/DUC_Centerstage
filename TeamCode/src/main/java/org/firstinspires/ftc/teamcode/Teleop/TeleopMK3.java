@@ -255,8 +255,6 @@ public class TeleopMK3 extends LinearOpMode {
             double cos = Math.cos((realTheta * (Math.PI/180)) - (Math.PI / 4));
             double maxSinCos = Math.max(Math.abs(sin), Math.abs(cos));
 
-            //sets motor powereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeew44444444444444    q1`1`
-            //this comment corrupted but its just too funny to delete
             double[] motorPower;
             if (fieldCentricStrafing) {
                 motorPower = new double[]{

@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -14,8 +15,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueFrontstage;
+import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueBackstage;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.io.BufferedReader;
@@ -30,16 +32,17 @@ Uses encoders
 */
 @Autonomous
 @Config
-public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode {
+@Disabled
+public class Autonomous10430Backup<myIMUparameters> extends LinearOpMode {
 
-    int step = -1;
+    int step = 0;
     int lastStep = 0;
     boolean runOnce = true;
 
     private static final String BASE_FOLDER_NAME = "autonomousTexts";
-    public static final String AUTONOMOUS_DIRECTORY = "frontstageBlue";
-    String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/1";
-    public static String textFileName = "center";
+    public static final String AUTONOMOUS_DIRECTORY = "";
+    static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY;
+    public static String textFileName = "test";
     public static double speed = 0.3;
 
     private DcMotor frontLeft;
@@ -56,7 +59,7 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
 
     private IMU imu;
     private YawPitchRollAngles robotOrientation;
-    private ducProcessorBlueFrontstage ducProcessor;
+    private ducProcessorBlueBackstage ducProcessor;
     private double duckPosition;
 
     InterpLUT armAngles;
@@ -69,35 +72,22 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
 
     boolean wristPos = true;
 
-    double kp = 0.003;
+    double kp = 0.0025;
     String highestPosition = "";
 
     double integralSum = 0;
-    public static double autoVariable = 1;
-    private static double KpPID = 0.001;
-    private static double Ki = 0;
-    private static double Kd = 0;
-    private static double Kk = 0.16;
-    public static double accuracy = 0.05;
-    public static double wristAngle = 0.2;
-    boolean liftArmPls = false;
+    public static double KpPID = 0;
+    public static double Ki = 0;
+    public static double Kd = 0;
 
     ElapsedTime timer = new ElapsedTime();
     private double lastError = 0;
-
-    private boolean moveToNextStep = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
         imu = hardwareMap.get(IMU.class, "imu");
         initializeMotors();
-
-        if (!(autoVariable == 1 || autoVariable == 2 || autoVariable == 3)) {
-            autoVariable = 1;
-        }
-
-        directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Double.toString(autoVariable);
 
         armAngles = new InterpLUT();
         armAngles.add(-100, -41); //safety 1
@@ -112,7 +102,11 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD, RevHubOrientationOnRobot.UsbFacingDirection.UP)));
         robotOrientation = imu.getRobotYawPitchRollAngles();
 
-        ducProcessor = new ducProcessorBlueFrontstage();
+        double Yaw   = robotOrientation.getYaw(AngleUnit.DEGREES);
+        double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
+        double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
+
+        ducProcessor = new ducProcessorBlueBackstage();
 
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .addProcessor(ducProcessor)
@@ -152,33 +146,14 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
             armMotor2.setPower(-tgtArmPower);
 
             switch (step) {
-                case -1: //this is the init
-                    if (runOnce) {
-                        failsafeCountdown = 100;
-                        countdown = 100;
-                        armPosition = 0;
-                        servoWrist.setPosition(0.743);
-                        liftArmPls = true;
-                        runOnce = false;
-                    }
-                    failsafeCountdown--;
-                    if (armAngles.get(armMotor.getCurrentPosition()) > 0 || failsafeCountdown<1) {
-                        liftArmPls = false;
-                        countdown--;
-                        if (countdown<1) {
-                            step++;
-                            runOnce = true;
-                        }
-                    }
-                    break;
                 case 100:
                     if (runOnce) {
                         failsafeCountdown = 100;
-                        servoWrist.setPosition(wristAngle);
+                        servoWrist.setPosition(0.35);
                         runOnce = false;
                     }
                     failsafeCountdown--;
-                    if (servoWrist.getPosition() == wristAngle) {
+                    if (servoWrist.getPosition() == 0.35) {
                         step++;
                         runOnce = true;
                     }
@@ -187,11 +162,11 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
                     if (runOnce) {
                         failsafeCountdown = 100;
                         countdown = 100;
-                        armPosition = 135;
+                        armPosition = 190;
                         runOnce = false;
                     }
                     failsafeCountdown--;
-                    if (armAngles.get(armMotor.getCurrentPosition()) > 134 || failsafeCountdown<1) {
+                    if (armAngles.get(armMotor.getCurrentPosition()) > 189 || failsafeCountdown<1) {
                         countdown--;
                         if (countdown<1) {
                             step++;
@@ -236,13 +211,11 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
                     break;
                 case 105:
                     if (runOnce) {
-                        failsafeCountdown = 100;
                         armPosition = -30;
                         runOnce = false;
                     }
-                    if (armAngles.get(armMotor.getCurrentPosition()) < -20 || failsafeCountdown<1) {
+                    if (armAngles.get(armMotor.getCurrentPosition()) < -29) {
                         countdown--;
-                        failsafeCountdown--;
                         if (countdown<1) {
                             step++;
                             runOnce = true;
@@ -260,8 +233,6 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
             telemetry.addData("Countdown:", countdown);
             telemetry.addData("Failsafe:", failsafeCountdown);
             telemetry.addData("Arm angle:", armAngles.get(armMotor.getCurrentPosition()));
-            //telemetry.addData("POWER", output);
-            //telemetry.addData("ERROR STUFF", (error * KpPID));
             telemetry.update();
         }
 
@@ -275,20 +246,20 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
     }
 
     private void caseStatement(List<double[]> parsedLines) {
-        if (step == parsedLines.size()) {
-            if (autoVariable != 3) {
-                servoClaw.setPosition(0.18);
+            if (step == parsedLines.size()) {
+                return;
             }
-            return;
-        }
-        if (runOnce) {
-            runToParsedPosition(parsedLines.get(step), 0.1);
-            runOnce = false;
-        }
-        if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
-            step++;
-            runOnce = true;
-        }
+            if (step == 0) {
+                servoWrist.setPosition(0.743);
+            }
+            if (runOnce) {
+                runToParsedPosition(parsedLines.get(step), 0.1);
+                runOnce = false;
+            }
+            if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
+                step++;
+                runOnce = true;
+            }
     }
 
     private void runToParsedPosition(double[] myLine, double power) {
@@ -334,10 +305,7 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
 
         timer.reset();
 
-        double output = (error * KpPID) + (derivative * Kd) + (integralSum * Ki) + (error > 0 ? Kk : -Kk);
-        telemetry.addData("POWER", output);
-        telemetry.addData("ERROR STUFF", (error * KpPID));
-        telemetry.update();
+        double output = (error * KpPID) + (derivative * Kd) + (integralSum * Ki);
         return output;
     }
 
@@ -355,11 +323,6 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -442,14 +405,13 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
     }
 
     private double calculateArmPower(double armAngle, double kCos, double kp, double target) {
-        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle) + (liftArmPls ? 0.05 : 0));
+        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle));
     }
 
     private static List<double[]> readAndParseDoublesFromFile() {
         List<double[]> parsedLines = new ArrayList<>();
-
         try {
-            FileReader reader = new FileReader(Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Double.toString(autoVariable)+"/"+textFileName+".txt");
+            FileReader reader = new FileReader(directoryPath+"/"+textFileName+".txt");
             BufferedReader bufferedReader = new BufferedReader(reader);
 
             String line;
@@ -477,6 +439,7 @@ public class AutonomousBlueFrontstageDONE<myIMUparameters> extends LinearOpMode 
         return parsedLines;
     }
 
+    //i love chat-gpt! if this code doesnt work dont blame me
     public static double findHighest(double[] arr) {
         double highest = arr[0];
         double highestI = 0;

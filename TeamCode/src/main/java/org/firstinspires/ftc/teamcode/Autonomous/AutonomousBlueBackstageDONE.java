@@ -8,14 +8,15 @@ import com.arcrobotics.ftclib.util.InterpLUT;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.lib.AutoLib;
 import org.firstinspires.ftc.teamcode.processors.ducProcessorBlueBackstage;
 import org.firstinspires.ftc.vision.VisionPortal;
 
@@ -33,26 +34,27 @@ Uses encoders
 @Config
 public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
 
-    int step = 0;
+    int step = -1;
+    int lastStep = 0;
     boolean runOnce = true;
 
-    public static final String PARK_POSITION = "right"; //LOWERCASE ONLY
     private static final String BASE_FOLDER_NAME = "autonomousTexts";
     public static final String AUTONOMOUS_DIRECTORY = "backstageBlue";
-    static String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY;
+    String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/1";
     public static String textFileName = "center";
     public static double speed = 0.3;
 
-    public static DcMotor frontLeft;
-    public static DcMotor frontRight;
-    public static DcMotor backLeft;
-    public static DcMotor backRight;
-    public static DcMotor armMotor;
-    public static DcMotor armMotor2;
-    public static Servo servoClaw;
-    public static Servo servoWrist;
-    public static Servo servoLauncher;
-    public static Servo servoPooper;
+    private DcMotor frontLeft;
+    private DcMotor frontRight;
+    private DcMotor backLeft;
+    private DcMotor backRight;
+    private DcMotor armMotor;
+    private DcMotor armMotor2;
+    Servo servoClaw;
+    Servo servoClaw2;
+    Servo servoWrist;
+    Servo servoLauncher;
+    Servo servoPooper;
 
     private IMU imu;
     private YawPitchRollAngles robotOrientation;
@@ -60,13 +62,32 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
     private double duckPosition;
 
     InterpLUT armAngles;
-    double kCos = 0;
+    InterpLUT wristAngles;
+    double kCos = 0.13;
     double tgtArmPower = 0;
-    double armPosition = -20;
+    double armPosition = 0;
     double countdown = 100;
+    double failsafeCountdown = 0;
+
+    boolean wristPos = true;
 
     double kp = 0.003;
     String highestPosition = "";
+
+    double integralSum = 0;
+    public static double autoVariable = 1;
+    private static double KpPID = 0.001;
+    private static double Ki = 0;
+    private static double Kd = 0;
+    private static double Kk = 0.16;
+    public static double accuracy = 0.05;
+    public static double wristAngle = 0.2;
+    boolean liftArmPls = false;
+
+    ElapsedTime timer = new ElapsedTime();
+    private double lastError = 0;
+
+    private boolean moveToNextStep = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -74,21 +95,24 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         initializeMotors();
 
+        if (!(autoVariable == 1 || autoVariable == 2 || autoVariable == 3)) {
+            autoVariable = 1;
+        }
+
+        directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Double.toString(autoVariable);
+
         armAngles = new InterpLUT();
         armAngles.add(-100, -41); //safety 1
         armAngles.add(0, -40); //init position
         armAngles.add(100, 0); //straight out (forward)
         armAngles.add(400, 90); //straight up
-        armAngles.add(666, 180); //straight back
-        armAngles.add(1000, 181); //safety 2
+        armAngles.add(666, 180); //straight back SCARY!!!!!!!!!!!!!!!!!!!!!!!!!!
+        armAngles.add(700, 190); //straight back SCARY!!!!!!!!!!!!!!!!!!!!!!!!!!
+        armAngles.add(1000, 191); //safety 2
         armAngles.createLUT();
 
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD, RevHubOrientationOnRobot.UsbFacingDirection.UP)));
         robotOrientation = imu.getRobotYawPitchRollAngles();
-
-        double Yaw   = robotOrientation.getYaw(AngleUnit.DEGREES);
-        double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
-        double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
 
         ducProcessor = new ducProcessorBlueBackstage();
 
@@ -102,25 +126,15 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
                 .build();
 
         while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {}
-        servoWrist.setPosition(0.1);
-        servoClaw.setPosition(0.5);
-        servoLauncher.setPosition(0.2);
+        servoWrist.setPosition(0);
+        servoClaw.setPosition(0.35);
+        servoClaw2.setPosition(0.6);
+        servoLauncher.setPosition(0);
         servoPooper.setPosition(0.5);
         while (!isStarted() && !isStopRequested()) {
             duckPosition = ducProcessor.getDuckPosition();
             telemetry.addData("DUCK POSITION", duckPosition);
-            switch((int)duckPosition) {
-                case 1:
-                    textFileName = "right";
-                break;
-                case 2:
-                    textFileName = "left";
-                break;
-                case 3:
-                    textFileName = "center";
-                break;
-            }
-            telemetry.addData("TARGET POSITION", textFileName);
+            telemetry.addData("TARGET FILE", textFileName);
             telemetry.update();
         }
 
@@ -128,72 +142,30 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
 
         List<double[]> parsedLines = readAndParseDoublesFromFile();
 
+        /*
+        wrist position: 0.35
+        arm angle: 180
+        (arm power: -0.12)
+        */
+
         while (isStarted() && !isStopRequested()) {
-            tgtArmPower = AutoLib.calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
+            tgtArmPower = calculateArmPower(armAngles.get(armMotor.getCurrentPosition()), kCos, kp, armPosition);
             armMotor.setPower(tgtArmPower);
             armMotor2.setPower(-tgtArmPower);
 
             switch (step) {
-                case 0:
-                    caseStatement(parsedLines);
-                break;
-                case 1:
-                    caseStatement(parsedLines);
-                    break;
-                case 2:
-                    caseStatement(parsedLines);
-                    break;
-                case 3:
-                    caseStatement(parsedLines);
-                    break;
-                case 4:
-                    caseStatement(parsedLines);
-                    break;
-                case 5:
-                    caseStatement(parsedLines);
-                    break;
-                case 6:
-                    caseStatement(parsedLines);
-                    break;
-                case 7:
-                    caseStatement(parsedLines);
-                    break;
-                case 8:
-                    caseStatement(parsedLines);
-                    break;
-                case 9:
-                    caseStatement(parsedLines);
-                    break;
-                case 10:
+                case -1: //this is the init
                     if (runOnce) {
-                        servoWrist.setPosition(0.3);
-                        runOnce = false;
-                    }
-                    if (servoWrist.getPosition() == 0.3) {
-                        step++;
-                        runOnce = true;
-                    }
-                    break;
-                case 11:
-                    if (runOnce) {
-                        armPosition = 130;
-                        runOnce = false;
-                    }
-                    if (armAngles.get(armMotor.getCurrentPosition()) > 129) {
-                        countdown--;
-                        if (countdown<1) {
-                            step++;
-                            runOnce = true;
-                        }
-                    }
-                    break;
-                case 12:
-                    if (runOnce) {
+                        failsafeCountdown = 100;
                         countdown = 100;
-                        servoClaw.setPosition(0.675);
+                        armPosition = 0;
+                        servoWrist.setPosition(0.743);
+                        liftArmPls = true;
                         runOnce = false;
                     }
-                    if (servoClaw.getPosition() == 0.675) {
+                    failsafeCountdown--;
+                    if (armAngles.get(armMotor.getCurrentPosition()) > 0 || failsafeCountdown<1) {
+                        liftArmPls = false;
                         countdown--;
                         if (countdown<1) {
                             step++;
@@ -201,33 +173,41 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
                         }
                     }
                     break;
-                case 13:
+                case 100:
                     if (runOnce) {
-                        servoWrist.setPosition(0.9);
+                        failsafeCountdown = 100;
+                        servoWrist.setPosition(wristAngle);
                         runOnce = false;
                     }
-                    if (servoWrist.getPosition() == 0.9) {
+                    failsafeCountdown--;
+                    if (servoWrist.getPosition() == wristAngle) {
                         step++;
                         runOnce = true;
                     }
                     break;
-                case 14:
+                case 101:
+                    if (runOnce) {
+                        failsafeCountdown = 100;
+                        countdown = 100;
+                        armPosition = 135;
+                        runOnce = false;
+                    }
+                    failsafeCountdown--;
+                    if (armAngles.get(armMotor.getCurrentPosition()) > 134 || failsafeCountdown<1) {
+                        countdown--;
+                        if (countdown<1) {
+                            step++;
+                            runOnce = true;
+                        }
+                    }
+                    break;
+                case 102:
                     if (runOnce) {
                         countdown = 50;
-                        servoClaw.setPosition(0.5);
+                        servoClaw.setPosition(0.18);
                         runOnce = false;
                     }
-                    if (servoClaw.getPosition() == 0.5) {
-                        step++;
-                        runOnce = true;
-                    }
-                    break;
-                case 15:
-                    if (runOnce) {
-                        armPosition = 30;
-                        runOnce = false;
-                    }
-                    if (armAngles.get(armMotor.getCurrentPosition()) < 31) {
+                    if (servoClaw.getPosition() == 0.18) {
                         countdown--;
                         if (countdown<1) {
                             step++;
@@ -235,31 +215,57 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
                         }
                     }
                     break;
-                case 16:
+                case 103:
                     if (runOnce) {
-                        armPosition = -10;
+                        servoWrist.setPosition(0);
                         runOnce = false;
                     }
-                    if (armAngles.get(armMotor.getCurrentPosition()) < -9) {
+                    if (servoWrist.getPosition() == 0) {
                         step++;
                         runOnce = true;
                     }
                     break;
-                case 17:
+                case 104:
                     if (runOnce) {
-                        runToParsedPosition(parsedLines.get(parsedLines.size() - 1), 0.1);
+                        countdown = 50;
+                        servoClaw.setPosition(0.35);
                         runOnce = false;
                     }
-                    if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
+                    if (servoClaw.getPosition() == 0.35) {
                         step++;
                         runOnce = true;
                     }
+                    break;
+                case 105:
+                    if (runOnce) {
+                        failsafeCountdown = 100;
+                        armPosition = -30;
+                        runOnce = false;
+                    }
+                    if (armAngles.get(armMotor.getCurrentPosition()) < -20 || failsafeCountdown<1) {
+                        countdown--;
+                        failsafeCountdown--;
+                        if (countdown<1) {
+                            step++;
+                            runOnce = true;
+                        }
+                    }
+                    break;
+                case 106:
+                    step = lastStep;
+                    break;
+                default:
+                    caseStatement(parsedLines);
+                    break;
             }
-            telemetry.addData("step:", step);
+            telemetry.addData("Step:", step);
+            telemetry.addData("Countdown:", countdown);
+            telemetry.addData("Failsafe:", failsafeCountdown);
+            telemetry.addData("Arm angle:", armAngles.get(armMotor.getCurrentPosition()));
+            //telemetry.addData("POWER", output);
+            //telemetry.addData("ERROR STUFF", (error * KpPID));
             telemetry.update();
         }
-
-
 
         for (double[] line : parsedLines) {
             runToParsedPosition(line, 0.1);
@@ -271,24 +277,19 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
     }
 
     private void caseStatement(List<double[]> parsedLines) {
-        if (parsedLines.size() < step + 2) {
-
-            DcMotor[] motors = new DcMotor[]{ frontRight, frontLeft, backRight, backLeft };
-            for (int i = 0; i<4; i++) {
-                motors[i].setPower(0);
+        if (step == parsedLines.size()) {
+            if (autoVariable != 3) {
+                servoClaw.setPosition(0.18);
             }
-
-            step = 10;
+            return;
+        }
+        if (runOnce) {
+            runToParsedPosition(parsedLines.get(step), 0.1);
+            runOnce = false;
+        }
+        if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
+            step++;
             runOnce = true;
-        } else {
-            if (runOnce) {
-                runToParsedPosition(parsedLines.get(step), 0.1);
-                runOnce = false;
-            }
-            if (!frontRight.isBusy() && !frontLeft.isBusy() && !backLeft.isBusy() && !backRight.isBusy()) {
-                step++;
-                runOnce = true;
-            }
         }
     }
 
@@ -296,8 +297,13 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
 
         if (myLine[0] == 69420) {
             //open pooper
-            servoPooper.setPosition(0);
+            servoClaw2.setPosition(0.8);
             sleep(500);
+            return;
+        }
+        if (myLine[0] == 6969) {
+            lastStep = step + 1;
+            step = 99;
             return;
         }
 
@@ -316,10 +322,25 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        Drive(speed, myLine, 0.3);
+        simpleDrive(speed, myLine);
 
         while (frontRight.isBusy() || frontLeft.isBusy() || backLeft.isBusy() || backRight.isBusy()) {}
 
+    }
+
+    public double runToPID(double reference, double state) {
+        double error = reference - state;
+        integralSum += error * timer.seconds();
+        double derivative = (error - lastError) / timer.seconds();
+        lastError = error;
+
+        timer.reset();
+
+        double output = (error * KpPID) + (derivative * Kd) + (integralSum * Ki) + (error > 0 ? Kk : -Kk);
+        telemetry.addData("POWER", output);
+        telemetry.addData("ERROR STUFF", (error * KpPID));
+        telemetry.update();
+        return output;
     }
 
     private void initializeMotors() {
@@ -337,12 +358,18 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        servoClaw = hardwareMap.get(Servo.class, "claw");
+        servoClaw = hardwareMap.get(Servo.class, "clawLeft");
+        servoClaw2 = hardwareMap.get(Servo.class, "clawRight");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
         servoLauncher = hardwareMap.get(Servo.class, "launcher");
         servoPooper = hardwareMap.get(Servo.class, "pooper");
@@ -364,34 +391,6 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
                 backRight.setTargetPosition(-distance);
                 backLeft.setTargetPosition(distance);
                 break;
-
-            case "strafeLeft":
-                frontRight.setTargetPosition(distance);
-                frontLeft.setTargetPosition(distance);
-                backRight.setTargetPosition(-distance);
-                backLeft.setTargetPosition(-distance);
-                break;
-
-            case "strafeRight":
-                frontRight.setTargetPosition(-distance);
-                frontLeft.setTargetPosition(-distance);
-                backRight.setTargetPosition(distance);
-                backLeft.setTargetPosition(distance);
-                break;
-
-            case "turnLeft":
-                frontRight.setTargetPosition(distance);
-                frontLeft.setTargetPosition(distance);
-                backRight.setTargetPosition(distance);
-                backLeft.setTargetPosition(distance);
-                break;
-
-            case "turnRight":
-                frontRight.setTargetPosition(-distance);
-                frontLeft.setTargetPosition(-distance);
-                backRight.setTargetPosition(-distance);
-                backLeft.setTargetPosition(-distance);
-                break;
         } //this takes the type input variable and sets the direction accordingly
         //for example, the "forward" input would make all motors go forward (obviously)
 
@@ -400,10 +399,11 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        //Drive(power, new double[]{ frontRight.getTargetPosition(), frontLeft.getTargetPosition(), backRight.getTargetPosition(), backLeft.getTargetPosition() });
+        //Drive(power);
 
         while (frontRight.isBusy() && frontLeft.isBusy() && backLeft.isBusy() && backRight.isBusy()) {
-            //telemetry.addData("Type of movement", type);
+            telemetry.addData("Distance left:", frontRight.getTargetPosition()-frontRight.getCurrentPosition());
+            telemetry.update();
         }
 
         //sets power to zero, therefore braking
@@ -424,17 +424,34 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
 
         for (int i = 0; i<4; i++) {
             if (targetPositions[i] > 0) {
-                motors[i].setPower(power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
+                motors[i].setPower(power*(powerPercentagesArray[i]/100) /*+ (kp * (targetPositions[i]-motors[i].getCurrentPosition()))*/);
             } else {
-                motors[i].setPower(-power*(powerPercentagesArray[i]/100) + (kp * (targetPositions[i]-motors[i].getCurrentPosition())));
+                motors[i].setPower(-power*(powerPercentagesArray[i]/100) /*+ (kp * (targetPositions[i]-motors[i].getCurrentPosition()))*/);
             }
         }
     }
 
+    private void simpleDrive(double power, double[] targetPositions) {
+        DcMotor[] motors = new DcMotor[]{ frontRight, frontLeft, backRight, backLeft };
+
+        for (int i = 0; i<4; i++) {
+            if (targetPositions[i] > 0) {
+                motors[i].setPower(power);
+            } else {
+                motors[i].setPower(-power);
+            }
+        }
+    }
+
+    private double calculateArmPower(double armAngle, double kCos, double kp, double target) {
+        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle) + (liftArmPls ? 0.05 : 0));
+    }
+
     private static List<double[]> readAndParseDoublesFromFile() {
         List<double[]> parsedLines = new ArrayList<>();
+
         try {
-            FileReader reader = new FileReader(directoryPath+"/"+textFileName+".txt");
+            FileReader reader = new FileReader(Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Double.toString(autoVariable)+"/"+textFileName+".txt");
             BufferedReader bufferedReader = new BufferedReader(reader);
 
             String line;
@@ -455,11 +472,6 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
                 parsedLines.add(parsedNumbers);
             }
 
-            if (stringCompare("left", PARK_POSITION) == 0) {
-                parsedLines.add(new double[]{ -844.0, -1004.0, 966.0, 845.0 });
-            } else if (stringCompare("right", PARK_POSITION) == 0) {
-                parsedLines.add(new double[]{ 844.0, 1004.0, -966.0, -845.0 });
-            }
             bufferedReader.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -467,7 +479,6 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
         return parsedLines;
     }
 
-    //i love chat-gpt! if this code doesnt work dont blame me
     public static double findHighest(double[] arr) {
         double highest = arr[0];
         double highestI = 0;
@@ -482,6 +493,7 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
 
     public static int stringCompare(String str1, String str2)
     {
+
         int l1 = str1.length();
         int l2 = str2.length();
         int lmin = Math.min(l1, l2);
@@ -494,9 +506,15 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
                 return str1_ch - str2_ch;
             }
         }
+
+        // Edge case for strings like
+        // String 1="Geeks" and String 2="Geeksforgeeks"
         if (l1 != l2) {
             return l1 - l2;
         }
+
+        // If none of the above conditions is true,
+        // it implies both the strings are equal
         else {
             return 0;
         }
