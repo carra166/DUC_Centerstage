@@ -134,6 +134,18 @@ public class AutonomousBlueBackstageDONE<myIMUparameters> extends LinearOpMode {
         while (!isStarted() && !isStopRequested()) {
             duckPosition = ducProcessor.getDuckPosition();
             telemetry.addData("DUCK POSITION", duckPosition);
+            telemetry.addData("TARGET AUTO TYPE", autoVariable);
+            switch((int)duckPosition) {
+                case 1:
+                    textFileName = "right";
+                    break;
+                case 2:
+                    textFileName = "left";
+                    break;
+                case 3:
+                    textFileName = "center";
+                    break;
+            }
             telemetry.addData("TARGET FILE", textFileName);
             telemetry.update();
         }

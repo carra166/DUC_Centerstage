@@ -224,9 +224,9 @@ public class TeleopMK3 extends LinearOpMode {
             }
 
             if (this.gamepad1.dpad_up) {
-                tgtPowerHang = 0.5 / division;
+                tgtPowerHang = 1 / division;
             } else if (this.gamepad1.dpad_down) {
-                tgtPowerHang = -0.5 / division;
+                tgtPowerHang = -1 / division;
             } else {
                 tgtPowerHang = 0;
             }

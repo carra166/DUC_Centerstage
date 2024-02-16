@@ -20,8 +20,8 @@ public class ducProcessorBlueFrontstage implements VisionProcessor {
     public Scalar redLower = new Scalar(82.2, 172.8, 131.8);
     public Scalar redUpper = new Scalar(134.6, 255.0, 255.0);
 
-    public Rect theFirstOne = new Rect(120, 370, 40, 40);
-    public Rect theSecondOne = new Rect(430, 380, 40, 40);
+    public Rect theFirstOne = new Rect(140, 360, 40, 40);
+    public Rect theSecondOne = new Rect(480, 380, 40, 40);
     public Rect theThirdOne = new Rect(600, 200, 40, 40);
 
     public Mat redFirst = new Mat();
