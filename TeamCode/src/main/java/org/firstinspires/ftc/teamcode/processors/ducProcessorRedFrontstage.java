@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 public class ducProcessorRedFrontstage implements VisionProcessor {
 
-    public Scalar redLower = new Scalar(107.7, 141.7, 109.1);
+    public Scalar redLower = new Scalar(107.7, 86.7, 109.1);
     public Scalar redUpper = new Scalar(201.2, 255, 247.9);
 
     public Rect theFirstOne = new Rect(10, 370, 40, 40);
@@ -61,7 +61,7 @@ public class ducProcessorRedFrontstage implements VisionProcessor {
         Imgproc.rectangle(frame, theSecondOne, new Scalar(100,0,222));
         Imgproc.rectangle(frame, theThirdOne, new Scalar(100,0,222));
 
-        duckPosition = 1;
+        duckPosition = 3;
 
         //AREA 1
         detectContours(redFirst, theFirstOne, contours, frame, 1);

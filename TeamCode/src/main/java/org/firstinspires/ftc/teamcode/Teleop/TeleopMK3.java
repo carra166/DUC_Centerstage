@@ -38,7 +38,6 @@ public class TeleopMK3 extends LinearOpMode {
     Servo servoClawRight;
     Servo servoWrist;
     Servo servoLauncher;
-    Servo servoPooper;
 
     InterpLUT frontRightLUT;
     InterpLUT frontLeftLUT;
@@ -66,7 +65,7 @@ public class TeleopMK3 extends LinearOpMode {
     boolean leftClawOpen = true; //ignore the fact that it's inverted
     boolean rightClawOpen = true;
     boolean wristPos = true; //ignore the fact that it's inverted
-    double wristAngle = 0.2;
+    public static double wristAngle = 0.24;
 
     boolean canMove = true;
     boolean fieldCentricStrafing = true;
@@ -99,10 +98,10 @@ public class TeleopMK3 extends LinearOpMode {
         armAngles.createLUT();
 
         wristAngles = new InterpLUT();
-        wristAngles.add(-10000, 0.21);
-        wristAngles.add(125, 0.2);
-        wristAngles.add(180, 0.35);
-        wristAngles.add(10000, 0.34);
+        wristAngles.add(-10000, 0.25);
+        wristAngles.add(125, 0.24);
+        wristAngles.add(180, 0.39);
+        wristAngles.add(10000, 0.40);
         wristAngles.createLUT();
 
 
@@ -121,7 +120,6 @@ public class TeleopMK3 extends LinearOpMode {
         servoClawLeft.setPosition(0.35);
         servoClawRight.setPosition(0.6);
         servoLauncher.setPosition(0.2);
-        servoPooper.setPosition(0.5);
 
         SoundPlayer.getInstance().startPlaying((hardwareMap.appContext), soundIDs[0]);
         waitForStart();
@@ -202,7 +200,7 @@ public class TeleopMK3 extends LinearOpMode {
                     division = 0.9f;
                 } else {
                     //normal
-                    division = 1;
+                    division = 1.5;
                 }
             }
 
@@ -212,7 +210,7 @@ public class TeleopMK3 extends LinearOpMode {
                 if (wristPos) {
                     wristPos = false;
                 } else {
-                    servoWrist.setPosition(0.743); //arm down position
+                    servoWrist.setPosition(0.78); //arm down position
                     wristPos = true;
                 }
             } //0.4 for auto btw
@@ -333,7 +331,6 @@ public class TeleopMK3 extends LinearOpMode {
         servoClawRight = hardwareMap.get(Servo.class, "clawRight");
         servoWrist = hardwareMap.get(Servo.class, "wrist");
         servoLauncher = hardwareMap.get(Servo.class, "launcher");
-        servoPooper = hardwareMap.get(Servo.class, "pooper");
 
     }
 

@@ -250,7 +250,7 @@ public class Autonomous10430Backup<myIMUparameters> extends LinearOpMode {
                 return;
             }
             if (step == 0) {
-                servoWrist.setPosition(0.743);
+                servoWrist.setPosition(0.78);
             }
             if (runOnce) {
                 runToParsedPosition(parsedLines.get(step), 0.1);

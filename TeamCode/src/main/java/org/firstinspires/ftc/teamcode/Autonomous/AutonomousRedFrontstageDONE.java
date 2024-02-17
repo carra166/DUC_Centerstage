@@ -69,7 +69,7 @@ public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
 
     boolean wristPos = true;
 
-    double kp = 0.003;
+    double kp = 0.005;
     String highestPosition = "";
 
     double integralSum = 0;
@@ -79,7 +79,7 @@ public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
     private static double Kd = 0;
     private static double Kk = 0.16;
     public static double accuracy = 0.05;
-    public static double wristAngle = 0.2;
+    public static double wristAngle = 0.24;
     boolean liftArmPls = false;
 
     ElapsedTime timer = new ElapsedTime();
@@ -93,11 +93,7 @@ public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         initializeMotors();
 
-        if (!(autoVariable == 1 || autoVariable == 2 || autoVariable == 3)) {
-            autoVariable = 1;
-        }
-
-        directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Double.toString(autoVariable);
+        directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Integer.toString((int) autoVariable);
 
         armAngles = new InterpLUT();
         armAngles.add(-100, -41); //safety 1
@@ -127,7 +123,7 @@ public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
         servoWrist.setPosition(0);
         servoClaw.setPosition(0.35);
         servoClaw2.setPosition(0.6);
-        servoLauncher.setPosition(0);
+        servoLauncher.setPosition(0.2);
         servoPooper.setPosition(0.5);
         while (!isStarted() && !isStopRequested()) {
             duckPosition = ducProcessor.getDuckPosition();
@@ -135,16 +131,17 @@ public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
             telemetry.addData("TARGET AUTO TYPE", autoVariable);
             switch((int)duckPosition) {
                 case 1:
-                    textFileName = "right";
-                    break;
-                case 2:
                     textFileName = "left";
                     break;
-                case 3:
+                case 2:
                     textFileName = "center";
+                    break;
+                case 3:
+                    textFileName = "right";
                     break;
             }
             telemetry.addData("TARGET FILE", textFileName);
+            telemetry.addData("TARGET DIR", Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Integer.toString((int)autoVariable)+"/"+textFileName+".txt");
             telemetry.update();
         }
 
@@ -169,7 +166,7 @@ public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
                         failsafeCountdown = 100;
                         countdown = 100;
                         armPosition = 0;
-                        servoWrist.setPosition(0.743);
+                        servoWrist.setPosition(0.78);
                         liftArmPls = true;
                         runOnce = false;
                     }
@@ -454,14 +451,14 @@ public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
     }
 
     private double calculateArmPower(double armAngle, double kCos, double kp, double target) {
-        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle) + (liftArmPls ? 0.05 : 0));
+        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle) + (liftArmPls ? 0.01 : 0));
     }
 
     private static List<double[]> readAndParseDoublesFromFile() {
         List<double[]> parsedLines = new ArrayList<>();
 
         try {
-            FileReader reader = new FileReader(Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Double.toString(autoVariable)+"/"+textFileName+".txt");
+            FileReader reader = new FileReader(Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Integer.toString((int)autoVariable)+"/"+textFileName+".txt");
             BufferedReader bufferedReader = new BufferedReader(reader);
 
             String line;
@@ -482,6 +479,7 @@ public class AutonomousRedFrontstageDONE<myIMUparameters> extends LinearOpMode {
                 parsedLines.add(parsedNumbers);
             }
 
+            parsedLines.add(new double[]{ 0.0, 0.0, 0.0, 0.0 });
             bufferedReader.close();
         } catch (IOException e) {
             e.printStackTrace();

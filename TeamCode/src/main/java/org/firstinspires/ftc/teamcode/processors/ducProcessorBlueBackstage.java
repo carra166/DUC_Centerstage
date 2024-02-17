@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 public class ducProcessorBlueBackstage implements VisionProcessor {
 
-    public Scalar redLower = new Scalar(82.2, 172.8, 131.8);
+    public Scalar redLower = new Scalar(82.2, 66.8, 131.8);
     public Scalar redUpper = new Scalar(134.6, 255.0, 255.0);
 
     public Rect theFirstOne = new Rect(10, 370, 40, 40);

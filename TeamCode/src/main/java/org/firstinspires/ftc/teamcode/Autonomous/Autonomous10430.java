@@ -81,7 +81,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
     private static double Kd = 0;
     private static double Kk = 0.16;
     public static double accuracy = 0.05;
-    public static double wristAngle = 0.2;
+    public static double wristAngle = 0.24;
     boolean liftArmPls = false;
 
     ElapsedTime timer = new ElapsedTime();
@@ -99,7 +99,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
             autoVariable = 1;
         }
 
-        directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Double.toString(autoVariable);
+        directoryPath = Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Integer.toString((int)autoVariable);
 
         armAngles = new InterpLUT();
         armAngles.add(-100, -41); //safety 1
@@ -159,7 +159,7 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
                         failsafeCountdown = 100;
                         countdown = 100;
                         armPosition = 0;
-                        servoWrist.setPosition(0.743);
+                        servoWrist.setPosition(0.78);
                         liftArmPls = true;
                         runOnce = false;
                     }
@@ -444,14 +444,14 @@ public class Autonomous10430<myIMUparameters> extends LinearOpMode {
     }
 
     private double calculateArmPower(double armAngle, double kCos, double kp, double target) {
-        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle) + (liftArmPls ? 0.05 : 0));
+        return kCos * Math.cos(Math.toRadians(armAngle)) + (kp * (target-armAngle) + (liftArmPls ? 0.01 : 0));
     }
 
     private static List<double[]> readAndParseDoublesFromFile() {
         List<double[]> parsedLines = new ArrayList<>();
 
         try {
-            FileReader reader = new FileReader(Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Double.toString(autoVariable)+"/"+textFileName+".txt");
+            FileReader reader = new FileReader(Environment.getExternalStorageDirectory().getPath()+"/"+BASE_FOLDER_NAME+"/"+AUTONOMOUS_DIRECTORY+"/"+Integer.toString((int)autoVariable)+"/"+textFileName+".txt");
             BufferedReader bufferedReader = new BufferedReader(reader);
 
             String line;
